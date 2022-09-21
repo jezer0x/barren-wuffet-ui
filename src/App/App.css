@@ -600,7 +600,7 @@ button.App-connect-wallet:hover {
 
 .App-header-link-main img {
   display: inline-block;
-  height: 2.15rem;
+  height: 3.15rem;
   vertical-align: middle;
 }
 
@@ -1250,7 +1250,7 @@ button.App-button {
   }
 
   .App-header-link-main img {
-    height: 2.1rem;
+    height: 3.15rem;
   }
 
   .App-header.large {

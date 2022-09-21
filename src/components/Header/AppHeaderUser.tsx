@@ -9,7 +9,7 @@ import "./Header.css";
 import {
   isHomeSite,
   ARBITRUM,
-  AVALANCHE,
+  // AVALANCHE,
   getAccountUrl,
   getChainName,
   switchNetwork,
@@ -49,12 +49,12 @@ export function AppHeaderUser({
       icon: "ic_arbitrum_24.svg",
       color: "#264f79",
     },
-    {
-      label: getChainName(AVALANCHE),
-      value: AVALANCHE,
-      icon: "ic_avalanche_24.svg",
-      color: "#E841424D",
-    },
+    // {
+    //   label: getChainName(AVALANCHE),
+    //   value: AVALANCHE,
+    //   icon: "ic_avalanche_24.svg",
+    //   color: "#E841424D",
+    // },
   ];
   if (isDevelopment()) {
     networkOptions.push({
@@ -89,11 +89,11 @@ export function AppHeaderUser({
         <div className={cx("App-header-trade-link", { "homepage-header": isHomeSite() })}>
           <HeaderLink
             className="default-btn"
-            to="/trade"
+            to="/create-fund"
             redirectPopupTimestamp={redirectPopupTimestamp}
             showRedirectModal={showRedirectModal}
           >
-            <Trans>Trade</Trans>
+            <Trans>Create Fund</Trans>
           </HeaderLink>
         </div>
 
@@ -124,11 +124,11 @@ export function AppHeaderUser({
       <div className="App-header-trade-link">
         <HeaderLink
           className="default-btn"
-          to="/trade"
+          to="/create-fund"
           redirectPopupTimestamp={redirectPopupTimestamp}
           showRedirectModal={showRedirectModal}
         >
-          <Trans>Trade</Trans>
+          <Trans>Create Fund</Trans>
         </HeaderLink>
       </div>
 

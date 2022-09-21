@@ -2,7 +2,7 @@ import React from "react";
 import cx from "classnames";
 import { t } from "@lingui/macro";
 import "./Footer.css";
-import logoImg from "../../img/logo_bw.svg";
+import logoImg from "../../img/logo_bw_sq.svg";
 import twitterIcon from "../../img/ic_twitter.svg";
 import discordIcon from "../../img/ic_discord.svg";
 // import telegramIcon from "../../img/ic_telegram.svg";

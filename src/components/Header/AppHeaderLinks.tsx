@@ -47,7 +47,7 @@ export function AppHeaderLinks({
           <Trans>Dashboard</Trans>
         </HeaderLink>
       </div>
-      <div className="App-header-link-container">
+      {/* <div className="App-header-link-container">
         <HeaderLink to="/earn" redirectPopupTimestamp={redirectPopupTimestamp} showRedirectModal={showRedirectModal}>
           <Trans>Earn</Trans>
         </HeaderLink>
@@ -74,20 +74,12 @@ export function AppHeaderLinks({
         >
           <Trans>Ecosystem</Trans>
         </HeaderLink>
-      </div>
+      </div> */}
       <div className="App-header-link-container">
         <a href="https://gmxio.gitbook.io/gmx/" target="_blank" rel="noopener noreferrer">
           <Trans>About</Trans>
         </a>
       </div>
-      {small && !isHomeSite() && (
-        <div className="App-header-link-container">
-          {/* eslint-disable-next-line */}
-          <a href="#" onClick={openSettings}>
-            <Trans>Settings</Trans>
-          </a>
-        </div>
-      )}
     </div>
   );
 }
