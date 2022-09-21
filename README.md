@@ -1,6 +1,6 @@
 # Getting Started
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project was bootstrapped with the UI of the GMX protocol which we will be building on [GMX](https://github.com/gmx-io/gmx-interface), which in turn was bootstrapped using Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
 
@@ -53,6 +53,7 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 - `pages/` - Page components
 
 - `lib/` - Infrastructure code independent of business logic (widely used in the project base modules and functions for interaction with data sources, common utils, etc.)
+
   - `contracts`
     - `callContract.ts` - e.g. base function for requesting contracts
   - `chains`
@@ -66,6 +67,7 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
   data fetching, formatting, types and constants
 
   - `orders/` - Example entity folder
+
     - `types.ts` - Entity related types
     - `utils.ts` - Functions for calculations and formatting, can be split into several files
     - `contracts.ts` - Contracts calls
@@ -163,15 +165,15 @@ import {getSwapLimits} from 'domain/exchange/swap-utils'
 
 function useSwapState(props, {selectedTokenAddress, infoTokens, amount}) {
   const infoTokens = useInfoTokens(props.chainId, ...);
-  
+
   const tokenAmount = getTokenAmount(infoTokens, selectedTokenAddress, ...)
   const swapLimits = getSwapLimits(infoTokens, amount)
-  
+
   const swapFee = ...
   const fees = ...
-  
+
   ...some calculations
-  
+
   return {...}
 }
 ```
