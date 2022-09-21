@@ -2,34 +2,30 @@ import React from "react";
 import cx from "classnames";
 import { t } from "@lingui/macro";
 import "./Footer.css";
-import logoImg from "../../img/ic_gmx_footer.svg";
+import logoImg from "../../img/logo_bw.svg";
 import twitterIcon from "../../img/ic_twitter.svg";
 import discordIcon from "../../img/ic_discord.svg";
-import telegramIcon from "../../img/ic_telegram.svg";
+// import telegramIcon from "../../img/ic_telegram.svg";
 import githubIcon from "../../img/ic_github.svg";
-import mediumIcon from "../../img/ic_medium.svg";
+// import mediumIcon from "../../img/ic_medium.svg";
 import { NavLink } from "react-router-dom";
 import { isHomeSite, getAppBaseUrl, shouldShowRedirectModal } from "../../lib/legacy";
 
 const footerLinks = {
-  home: [
-    { text: t`Terms and Conditions`, link: "/terms-and-conditions" },
-    { text: t`Referral Terms`, link: "/referral-terms" },
-    { text: t`Media Kit`, link: "https://gmxio.gitbook.io/gmx/media-kit", external: true },
-    // { text: "Jobs", link: "/jobs", isAppLink: true },
-  ],
+  home: [],
   app: [
-    { text: t`Media Kit`, link: "https://gmxio.gitbook.io/gmx/media-kit", external: true },
-    // { text: "Jobs", link: "/jobs" },
+    // { text: t`Terms & conditions`, link: "/terms-and-conditions" },
+    // { text: t`About`, link: "/about" },
+    // { text: t`Referral Terms`, link: "/referral-terms" },
+    { text: t`Blog`, link: "https://www.jezer0x.com/", external: true },
   ],
 };
 
 const socialLinks = [
-  { link: "https://twitter.com/GMX_IO", name: "Twitter", icon: twitterIcon },
-  { link: "https://medium.com/@gmx.io", name: "Medium", icon: mediumIcon },
-  { link: "https://github.com/gmx-io", name: "Github", icon: githubIcon },
-  { link: "https://t.me/GMX_IO", name: "Telegram", icon: telegramIcon },
-  { link: "https://discord.gg/cxjZYR4gQK", name: "Discord", icon: discordIcon },
+  { link: "https://twitter.com/jezer0x", name: "Twitter", icon: twitterIcon },
+  { link: "https://github.com/jezer0x", name: "Github", icon: githubIcon },
+  // { link: "https://t.me/GMX_IO", name: "Telegram", icon: telegramIcon },
+  { link: "https://discord.gg/jkBF9mpQ6w", name: "Discord", icon: discordIcon },
 ];
 
 export default function Footer({ showRedirectModal, redirectPopupTimestamp }) {
@@ -39,7 +35,7 @@ export default function Footer({ showRedirectModal, redirectPopupTimestamp }) {
     <div className="Footer">
       <div className={cx("Footer-wrapper", { home: isHome })}>
         <div className="Footer-logo">
-          <img src={logoImg} alt="MetaMask" />
+          <img src={logoImg} alt="BarrenWuffet" />
         </div>
         <div className="Footer-social-link-block">
           {socialLinks.map((platform) => {
