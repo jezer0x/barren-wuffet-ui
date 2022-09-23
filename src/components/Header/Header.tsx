@@ -121,8 +121,8 @@ export function Header({
                 {isDrawerVisible && <FaTimes className="App-header-menu-icon" />}
               </div>
               <div className="App-header-link-main clickable" onClick={() => setIsDrawerVisible(!isDrawerVisible)}>
-                <img src={logoImg} className="big" alt="GMX Logo" />
-                <img src={logoSmallImg} className="small" alt="GMX Logo" />
+                <img src={logoImg} className="big" alt="Barren Wuffet Logo" />
+                <img src={logoSmallImg} className="small" alt="Barren Wuffet Logo" />
               </div>
             </div>
             <div className="App-header-container-right">

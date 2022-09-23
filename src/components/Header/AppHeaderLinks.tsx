@@ -76,9 +76,9 @@ export function AppHeaderLinks({
         </HeaderLink>
       </div> */}
       <div className="App-header-link-container">
-        <a href="https://gmxio.gitbook.io/gmx/" target="_blank" rel="noopener noreferrer">
+        <HeaderLink to="/about" redirectPopupTimestamp={redirectPopupTimestamp} showRedirectModal={showRedirectModal}>
           <Trans>About</Trans>
-        </a>
+        </HeaderLink>
       </div>
     </div>
   );

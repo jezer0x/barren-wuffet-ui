@@ -43,6 +43,7 @@ import {
 } from "../lib/legacy";
 
 import Home from "../pages/Home/Home";
+import About from "../pages/Home/About";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Ecosystem from "../pages/Ecosystem/Ecosystem";
 import Stake from "../pages/Stake/Stake";
@@ -457,7 +458,10 @@ function FullApp() {
           {!isHome && (
             <Switch>
               <Route exact path="/">
-                <Redirect to="/dashboard" />
+                <Home showRedirectModal={showRedirectModal} redirectPopupTimestamp={redirectPopupTimestamp} />
+              </Route>
+              <Route exact path="/about">
+                <About showRedirectModal={showRedirectModal} redirectPopupTimestamp={redirectPopupTimestamp} />
               </Route>
               <Route exact path="/trade">
                 <Exchange
