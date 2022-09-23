@@ -89,6 +89,16 @@ export function AppHeaderUser({
         <div className={cx("App-header-trade-link", { "homepage-header": isHomeSite() })}>
           <HeaderLink
             className="default-btn"
+            to="/invest"
+            redirectPopupTimestamp={redirectPopupTimestamp}
+            showRedirectModal={showRedirectModal}
+          >
+            <Trans>Invest</Trans>
+          </HeaderLink>
+        </div>
+        <div className={cx("App-header-trade-link", { "homepage-header": isHomeSite() })}>
+          <HeaderLink
+            className="default-btn"
             to="/create-fund"
             redirectPopupTimestamp={redirectPopupTimestamp}
             showRedirectModal={showRedirectModal}
@@ -121,6 +131,16 @@ export function AppHeaderUser({
 
   return (
     <div className="App-header-user">
+      <div className="App-header-trade-link">
+        <HeaderLink
+          className="default-btn"
+          to="/invest"
+          redirectPopupTimestamp={redirectPopupTimestamp}
+          showRedirectModal={showRedirectModal}
+        >
+          <Trans>Invest</Trans>
+        </HeaderLink>
+      </div>
       <div className="App-header-trade-link">
         <HeaderLink
           className="default-btn"
