@@ -72,6 +72,7 @@ import TokenSelector from "./TokenSelector";
 import ExchangeInfoRow from "./ExchangeInfoRow";
 import ConfirmationBox from "./ConfirmationBox";
 import OrdersToa from "./OrdersToa";
+import TradeOptionSelector from "../Fund/TradeOptionSelector";
 
 import { getToken, getTokenBySymbol, getTokens, getWhitelistedTokens } from "../../config/Tokens";
 import PositionRouter from "../../abis/PositionRouter.json";
@@ -183,6 +184,8 @@ export default function SwapBox(props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState(false);
   const [isHigherSlippageAllowed, setIsHigherSlippageAllowed] = useState(false);
+  const [tradeOption, setTradeOption] = useState();
+
   const { attachedOnChain, userReferralCode } = useUserReferralCode(library, chainId, account);
 
   let allowedSlippage = savedSlippageAmount;
@@ -231,6 +234,8 @@ export default function SwapBox(props) {
     [chainId, "Exchange-swap-leverage-slider-enabled"],
     true
   );
+
+  const [isTWAPEnabled, setIsTWAPEnabled] = useLocalStorageSerializeKey([chainId, "Exchange-swap-twap-enabled"], true);
 
   const hasLeverageOption = isLeverageSliderEnabled && !isNaN(parseFloat(leverageOption));
 
@@ -1868,6 +1873,9 @@ export default function SwapBox(props) {
             />
           )}
         </div>
+        <div>
+          <TradeOptionSelector selectedTradeOption={tradeOption} onSelectTradeOption={setTradeOption} />
+        </div>
         {showFromAndToSection && (
           <React.Fragment>
             <div className="Exchange-swap-section">
@@ -2062,7 +2070,7 @@ export default function SwapBox(props) {
         )}
         {(isLong || isShort) && !isStopOrder && (
           <div className="Exchange-leverage-box">
-            <div className="Exchange-leverage-slider-settings">
+            {/* <div className="Exchange-leverage-slider-settings">
               <Checkbox isChecked={isLeverageSliderEnabled} setIsChecked={setIsLeverageSliderEnabled}>
                 <span className="muted">Leverage slider</span>
               </Checkbox>
@@ -2085,7 +2093,12 @@ export default function SwapBox(props) {
                   defaultValue={leverageOption}
                 />
               </div>
-            )}
+            )} */}
+            <div className="Exchange-leverage-slider-settings">
+              <Checkbox isChecked={isTWAPEnabled} setIsChecked={setIsTWAPEnabled}>
+                <span>TWAP</span>
+              </Checkbox>
+            </div>
             {isShort && (
               <div className="Exchange-info-row">
                 <div className="Exchange-info-label">

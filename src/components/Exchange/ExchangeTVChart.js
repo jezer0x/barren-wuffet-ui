@@ -21,6 +21,7 @@ import Tab from "../Tab/Tab";
 
 import { getTokens, getToken } from "../../config/Tokens";
 import ChartTokenSelector from "./ChartTokenSelector";
+import ActionSelector from "../Fund/ActionSelector";
 
 const PRICE_LINE_TEXT_WIDTH = 15;
 
@@ -152,6 +153,8 @@ export default function ExchangeTVChart(props) {
     maxPrice: null,
     minPrice: null,
   });
+
+  const [actionToPerform, setActionToPerform] = useState();
   useEffect(() => {
     const tmp = getChartToken(swapOption, fromToken, toToken, chainId);
     setChartToken(tmp);
@@ -416,6 +419,10 @@ export default function ExchangeTVChart(props) {
     return null;
   }
 
+  const onSelectAction = (token) => {
+    setActionToPerform(token);
+  };
+
   const onSelectToken = (token) => {
     const tmp = getTokenInfo(infoTokens, token.address);
     setChartToken(tmp);
@@ -426,6 +433,16 @@ export default function ExchangeTVChart(props) {
     <div className="ExchangeChart tv" ref={ref}>
       <div className="ExchangeChart-top App-box App-box-border">
         <div className="ExchangeChart-top-inner">
+          <div>
+            <div className="ExchangeChart-title">
+              <ActionSelector
+                chainId={chainId}
+                selectedAction={actionToPerform}
+                onSelectAction={onSelectAction}
+                className="chart-action-selector"
+              />
+            </div>
+          </div>
           <div>
             <div className="ExchangeChart-title">
               <ChartTokenSelector

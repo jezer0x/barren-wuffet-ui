@@ -50,6 +50,7 @@ import Stake from "../pages/Stake/Stake";
 import CreateFund from "../pages/CreateFund/CreateFund";
 import FundPortfolio from "../pages/FundPortfolio/FundPortfolio";
 import FundTrading from "../pages/FundTrading/FundTrading";
+import { FundTrading2 } from "../pages/FundTrading/FundTrading2";
 import FundYield from "../pages/FundYield/FundYield";
 import { Exchange } from "../pages/Exchange/Exchange";
 import Actions from "../pages/Actions/Actions";
@@ -509,6 +510,21 @@ function FullApp() {
               </Route>
               <Route exact path="/fund/trading">
                 <FundTrading />
+              </Route>
+              <Route exact path="/fund/trading2">
+                <FundTrading2
+                  ref={exchangeRef}
+                  savedShowPnlAfterFees={savedShowPnlAfterFees}
+                  savedIsPnlInLeverage={savedIsPnlInLeverage}
+                  setSavedIsPnlInLeverage={setSavedIsPnlInLeverage}
+                  savedSlippageAmount={savedSlippageAmount}
+                  setPendingTxns={setPendingTxns}
+                  pendingTxns={pendingTxns}
+                  savedShouldShowPositionLines={savedShouldShowPositionLines}
+                  setSavedShouldShowPositionLines={setSavedShouldShowPositionLines}
+                  connectWallet={connectWallet}
+                  savedShouldDisableOrderValidation={savedShouldDisableOrderValidation}
+                />
               </Route>
               <Route exact path="/fund/yield">
                 <FundYield />
