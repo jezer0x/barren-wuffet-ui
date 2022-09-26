@@ -2,6 +2,7 @@ import { FunctionComponent } from "react";
 import Footer from "../../components/Footer/Footer";
 
 import FundOrdersTable from "../../components/FundOrdersTable/FundOrdersTable";
+import FundTabs from "../../components/FundTabs/FundTabs";
 
 import styles from "./FundTrading.module.css";
 
@@ -324,14 +325,7 @@ const FundTrading: FunctionComponent = () => {
           <img className={styles.groupIcon5} alt="" src="../locofy/group-237695.svg" />
           <img className={styles.groupIcon6} alt="" src="../locofy/group-237694.svg" />
         </div>
-        <div className={styles.groupDiv22}>
-          <div className={styles.rectangleDiv31} />
-          <img className={styles.rectangleIcon} alt="" src="../locofy/rectangle-4.svg" />
-          <div className={styles.tradingDiv}>Trading</div>
-          <img className={styles.rectangleIcon1} alt="" src="../locofy/rectangle-5.svg" />
-          <div className={styles.yIeldDiv}>YIeld</div>
-          <div className={styles.portfolioDiv}>Portfolio</div>
-        </div>
+        <FundTabs />
         <div className={styles.groupDiv23}>
           <div className={styles.dataUpdated1minAgo}>{`Data updated 1min ago `}</div>
           <img className={styles.groupIcon7} alt="" src="../locofy/group-237699.svg" />

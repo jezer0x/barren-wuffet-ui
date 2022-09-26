@@ -1,5 +1,7 @@
 import { FunctionComponent } from "react";
+import { Link } from "react-router-dom";
 import Footer from "../../components/Footer/Footer";
+import FundTabs from "../../components/FundTabs/FundTabs";
 
 import styles from "./FundPortfolio.module.css";
 
@@ -175,14 +177,7 @@ const FundPortfolio: FunctionComponent = () => {
           <img className={styles.groupIcon3} alt="" src="../locofy/group-237695.svg" />
           <img className={styles.groupIcon4} alt="" src="../locofy/group-237694.svg" />
         </div>
-        <div className={styles.groupDiv30}>
-          <img className={styles.rectangleIcon} alt="" src="../locofy/rectangle-4.svg" />
-          <div className={styles.tradingDiv}>Trading</div>
-          <img className={styles.rectangleIcon1} alt="" src="../locofy/rectangle-5.svg" />
-          <div className={styles.yIeldDiv}>YIeld</div>
-          <div className={styles.rectangleDiv16} />
-          <div className={styles.portfolioDiv}>Portfolio</div>
-        </div>
+        <FundTabs />
         <div className={styles.groupDiv31}>
           <div className={styles.dataUpdated1minAgo}>{`Data updated 1min ago `}</div>
           <img className={styles.groupIcon5} alt="" src="../locofy/group-237699.svg" />
