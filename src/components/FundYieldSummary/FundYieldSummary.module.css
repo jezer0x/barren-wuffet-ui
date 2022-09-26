@@ -1,0 +1,687 @@
+.rectangleDiv,
+.rectangleDiv1 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 15px;
+  background-color: #1c1c25;
+  width: 350px;
+  height: 924px;
+}
+.rectangleDiv1 {
+  top: 377px;
+  left: 23px;
+  border-radius: 10px;
+  background-color: #282835;
+  border: 1px solid #282835;
+  box-sizing: border-box;
+  width: 304px;
+  height: 254px;
+}
+.rectangleDiv2 {
+  position: absolute;
+  top: 934px;
+  left: 0;
+  border-radius: 15px;
+  background-color: #1c1c25;
+  width: 350px;
+  height: 374px;
+}
+.rectangleDiv3 {
+  position: absolute;
+  top: 1077px;
+  left: 23px;
+  border-radius: 10px;
+  border: 1px solid #575771;
+  box-sizing: border-box;
+  width: 304px;
+  height: 47px;
+}
+.div,
+.lPTokensDiv,
+.mAXDiv {
+  position: absolute;
+  display: inline-block;
+}
+.mAXDiv {
+  top: 1107px;
+  left: 296px;
+  font-size: 10px;
+  opacity: 0.5;
+}
+.div,
+.lPTokensDiv {
+  top: 1093px;
+  left: 41px;
+  font-size: 14px;
+}
+.lPTokensDiv {
+  top: 1063px;
+  left: 23px;
+  font-size: 10px;
+  opacity: 0.5;
+}
+.rectangleDiv4 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 7px;
+  background-color: #000;
+  width: 70px;
+  height: 29px;
+}
+.withdrawDiv {
+  position: absolute;
+  top: 3px;
+  left: 8px;
+  line-height: 22px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 53px;
+}
+.groupDiv1,
+.rectangleDiv5 {
+  position: absolute;
+  top: 1025px;
+  height: 29px;
+}
+.groupDiv1 {
+  left: 23px;
+  width: 70px;
+  text-align: center;
+  font-size: 10px;
+  color: #fed519;
+}
+.rectangleDiv5 {
+  left: 103px;
+  border-radius: 7px;
+  background-color: #000;
+  width: 65px;
+}
+.unstakeDiv {
+  position: absolute;
+  top: 1028px;
+  left: 111px;
+  font-size: 10px;
+  line-height: 22px;
+  font-weight: 500;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 49px;
+}
+.rectangleDiv6 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 10px;
+  border: 1px solid #fb9b20;
+  box-sizing: border-box;
+  width: 304px;
+  height: 50px;
+}
+.connectWalletB {
+  position: absolute;
+  top: 0;
+  left: 0;
+  line-height: 24px;
+  text-transform: uppercase;
+  display: inline-block;
+}
+.groupDiv2,
+.groupDiv3,
+.groupIcon {
+  position: absolute;
+  top: 0;
+  left: 155px;
+  width: 24px;
+  height: 24px;
+}
+.groupDiv2,
+.groupDiv3 {
+  top: 13px;
+  left: 63px;
+  width: 179px;
+}
+.groupDiv2 {
+  top: 1232px;
+  left: 23px;
+  width: 304px;
+  height: 50px;
+  font-size: 16px;
+  color: #fb9b20;
+}
+.rectangleDiv7 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 5px;
+  background: linear-gradient(47.02deg, #ff2f45, #fb9b20);
+  width: 20px;
+  height: 20px;
+}
+.withdrawWrappedDiv {
+  position: absolute;
+  top: 0;
+  left: 35px;
+  display: inline-block;
+}
+.carboncheckmarkIcon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  overflow: hidden;
+}
+.groupDiv4,
+.rectangleDiv8 {
+  position: absolute;
+  left: 23px;
+}
+.groupDiv4 {
+  top: 1186px;
+  width: 176px;
+  height: 20px;
+  font-size: 16px;
+  color: #d0d0eb;
+}
+.rectangleDiv8 {
+  top: 734px;
+  border-radius: 10px;
+  background-color: #282835;
+  border: 1px solid #282835;
+  box-sizing: border-box;
+  width: 304px;
+  height: 47px;
+}
+.vectorIcon,
+.vectorIcon1,
+.vectorIcon2,
+.vectorIcon3 {
+  position: absolute;
+  top: 245.8px;
+  left: 23px;
+  width: 304px;
+  height: 0.4px;
+}
+.vectorIcon1,
+.vectorIcon2,
+.vectorIcon3 {
+  top: 287.8px;
+}
+.vectorIcon2,
+.vectorIcon3 {
+  top: 329.8px;
+}
+.vectorIcon3 {
+  top: 106.8px;
+}
+.uSDTDiv {
+  position: absolute;
+  top: 211px;
+  left: 53.5px;
+  line-height: 28.27px;
+  font-weight: 500;
+  display: inline-block;
+}
+.eTHDiv,
+.groupIcon1,
+.groupIcon2,
+.groupIcon3,
+.wBTCDiv {
+  position: absolute;
+  top: 217px;
+  left: 96px;
+  width: 38.22px;
+  height: 16px;
+}
+.eTHDiv,
+.groupIcon2,
+.groupIcon3,
+.wBTCDiv {
+  top: 259px;
+}
+.eTHDiv,
+.groupIcon3,
+.wBTCDiv {
+  top: 301px;
+}
+.eTHDiv,
+.wBTCDiv {
+  top: 256px;
+  left: 54px;
+  line-height: 28.27px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  width: 34px;
+  height: 21px;
+}
+.eTHDiv {
+  top: 300px;
+  width: 23px;
+  height: 17px;
+}
+.span {
+  font-size: 10px;
+  color: #8d8d92;
+}
+.div1 {
+  position: absolute;
+  top: 211px;
+  left: 218px;
+  line-height: 28.27px;
+  font-weight: 500;
+  text-align: right;
+  display: inline-block;
+}
+.txtSpan {
+  line-break: anywhere;
+  width: 100%;
+}
+.div2 {
+  position: absolute;
+  top: 256px;
+  left: 218px;
+  line-height: 28.27px;
+  font-weight: 500;
+  width: 107px;
+}
+.div2,
+.div3,
+.div4 {
+  text-align: right;
+  display: flex;
+  align-items: center;
+  height: 21px;
+}
+.div3 {
+  position: absolute;
+  top: 298px;
+  left: 212px;
+  line-height: 28.27px;
+  font-weight: 500;
+  width: 113px;
+}
+.div4 {
+  top: 341px;
+  left: 250px;
+  width: 75px;
+}
+.div4,
+.div5,
+.div6 {
+  position: absolute;
+  line-height: 28.27px;
+  font-weight: 500;
+}
+.div5 {
+  top: 408px;
+  left: 43px;
+  display: flex;
+  align-items: center;
+  width: 75px;
+  height: 21px;
+}
+.div6 {
+  top: 434px;
+}
+.div6,
+.div7,
+.div8 {
+  left: 230px;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  width: 75px;
+  height: 21px;
+}
+.div7 {
+  position: absolute;
+  top: 512px;
+  line-height: 28.27px;
+  font-weight: 500;
+}
+.div8 {
+  top: 555px;
+}
+.div8,
+.div9,
+.mDiv,
+.poolDiv {
+  position: absolute;
+  line-height: 28.27px;
+  font-weight: 500;
+}
+.poolDiv {
+  top: 72px;
+  left: 23px;
+  display: inline-block;
+}
+.div9,
+.mDiv {
+  top: 595px;
+  left: 230px;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  width: 75px;
+  height: 21px;
+}
+.div9 {
+  top: 408px;
+}
+.currencyReservesDiv {
+  top: 168px;
+  left: 23px;
+  font-size: 18px;
+}
+.currencyReservesDiv,
+.poolParametersDiv,
+.tokenDiv {
+  position: absolute;
+  line-height: 28.27px;
+  font-weight: 500;
+  display: inline-block;
+}
+.poolParametersDiv {
+  top: 477px;
+  left: 43px;
+  font-size: 18px;
+}
+.tokenDiv {
+  top: 113px;
+  left: 23px;
+}
+.coinIcon,
+.groupIcon4 {
+  width: 22px;
+  height: 22px;
+  object-fit: cover;
+}
+.groupIcon4 {
+  position: absolute;
+  top: 256px;
+  left: 23px;
+}
+.coinIcon {
+  top: 298px;
+}
+.coinIcon,
+.coinIcon1,
+.uSDTotalDiv {
+  position: absolute;
+  left: 23px;
+}
+.coinIcon1 {
+  top: 214px;
+  width: 22px;
+  height: 22px;
+  object-fit: cover;
+}
+.uSDTotalDiv {
+  top: 344px;
+  font-size: 11px;
+  line-height: 22.45px;
+  color: #9191a7;
+  display: inline-block;
+}
+.x965590Div {
+  top: 72px;
+  left: 212px;
+  text-decoration: underline;
+  line-height: 28.27px;
+  font-weight: 500;
+  text-align: right;
+  display: inline-block;
+}
+.cRVDiv,
+.feeDiv,
+.x965590Div {
+  position: absolute;
+}
+.feeDiv {
+  top: 390px;
+  left: 43px;
+  line-height: 22.45px;
+  color: #9191a7;
+  display: inline-block;
+}
+.cRVDiv {
+  top: 877px;
+  left: 250px;
+  line-height: 28.27px;
+  font-weight: 500;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  width: 75px;
+  height: 21px;
+}
+.virtualPrice {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+.averageValueOf {
+  margin: 0;
+}
+.aAmplificationCoefficientCh,
+.dalilyUSDVolume,
+.liqudityUtilization24hVolum,
+.virtualPriceAverageValueOf {
+  position: absolute;
+  top: 439px;
+  left: 43px;
+  line-height: 14px;
+  color: #9191a7;
+  display: inline-block;
+}
+.aAmplificationCoefficientCh,
+.dalilyUSDVolume,
+.liqudityUtilization24hVolum {
+  top: 505px;
+  font-size: 10px;
+  width: 180px;
+}
+.dalilyUSDVolume,
+.liqudityUtilization24hVolum {
+  top: 558px;
+  width: 159px;
+}
+.dalilyUSDVolume {
+  top: 599px;
+  width: 187px;
+}
+.div10 {
+  position: absolute;
+  top: 755px;
+  left: 61px;
+  font-size: 14px;
+  line-height: 28.27px;
+  font-weight: 500;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 75px;
+  height: 21px;
+}
+.adminFeeDiv {
+  position: absolute;
+  top: 390px;
+  left: 249px;
+  line-height: 22.45px;
+  color: #9191a7;
+  text-align: right;
+  display: inline-block;
+}
+.div11 {
+  position: absolute;
+  top: 755px;
+  left: 214px;
+  font-size: 14px;
+  line-height: 28.27px;
+  font-weight: 500;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 75px;
+  height: 21px;
+}
+.baseVAPYDiv,
+.contractsDiv,
+.rewardsTAPRDiv,
+.x8E21D2Div {
+  position: absolute;
+  line-height: 28.27px;
+  font-weight: 500;
+  display: inline-block;
+}
+.x8E21D2Div {
+  top: 113px;
+  left: 210px;
+  text-decoration: underline;
+  text-align: right;
+}
+.baseVAPYDiv,
+.contractsDiv,
+.rewardsTAPRDiv {
+  top: 29px;
+  left: 23px;
+  font-size: 20px;
+}
+.baseVAPYDiv,
+.rewardsTAPRDiv {
+  top: 646px;
+  font-size: 18px;
+}
+.rewardsTAPRDiv {
+  top: 795px;
+}
+.groupIcon5,
+.groupIcon6 {
+  position: absolute;
+  top: 120px;
+  left: 287px;
+  width: 38.22px;
+  height: 16px;
+}
+.groupIcon6 {
+  top: 79px;
+}
+.cRVDiv1 {
+  position: absolute;
+  top: 876px;
+  left: 23px;
+  font-size: 11px;
+  line-height: 22.45px;
+  color: #9191a7;
+  display: inline-block;
+}
+.balancedAmountsDiv,
+.oneCoinDiv {
+  position: absolute;
+  top: 1145px;
+  left: 56px;
+  font-size: 16px;
+  color: #575771;
+  display: inline-block;
+  width: 70px;
+}
+.balancedAmountsDiv {
+  left: 183px;
+  color: #d0d0eb;
+  width: 136px;
+}
+.ellipseIcon,
+.ellipseIcon1,
+.ellipseIcon2 {
+  position: absolute;
+  top: 1144px;
+  left: 23px;
+  border-radius: 10px;
+  width: 20px;
+  height: 20px;
+}
+.ellipseIcon1,
+.ellipseIcon2 {
+  left: 150px;
+}
+.ellipseIcon2 {
+  top: 1148px;
+  left: 154px;
+  border-radius: 5px;
+  width: 12px;
+  height: 12px;
+}
+.clickHereTo {
+  text-decoration: underline;
+}
+.clickHereToLearnMoreAbout {
+  margin: 0;
+  color: #fed519;
+}
+.variableAPYBasedOnTodays {
+  position: absolute;
+  top: 685px;
+  left: 23px;
+  font-size: 10px;
+  line-height: 14px;
+  display: inline-block;
+  width: 304px;
+  color: #9191a7;
+}
+.clickHereTo1 {
+  text-decoration: underline;
+  color: #fed519;
+}
+.dailyDiv,
+.tokenAPRBasedOnCurrentPri,
+.weeklyDiv {
+  position: absolute;
+  line-height: 14px;
+  color: #9191a7;
+  display: inline-block;
+}
+.tokenAPRBasedOnCurrentPri {
+  top: 834px;
+  left: 23px;
+  font-size: 10px;
+  width: 296px;
+}
+.dailyDiv,
+.weeklyDiv {
+  top: 742px;
+  left: 85px;
+  text-align: center;
+  width: 27px;
+}
+.weeklyDiv {
+  left: 227px;
+  width: 49px;
+}
+.lineDiv {
+  position: absolute;
+  top: 734px;
+  left: 175px;
+  border-right: 1px solid #1c1c25;
+  box-sizing: border-box;
+  width: 0;
+  height: 47px;
+}
+.groupDiv {
+  position: absolute;
+  top: 404px;
+  left: 1155px;
+  width: 350px;
+  height: 1308px;
+  text-align: left;
+  font-size: 12px;
+  color: #fff;
+  font-family: Ubuntu;
+}

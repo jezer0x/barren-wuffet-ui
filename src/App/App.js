@@ -48,6 +48,9 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import Ecosystem from "../pages/Ecosystem/Ecosystem";
 import Stake from "../pages/Stake/Stake";
 import CreateFund from "../pages/CreateFund/CreateFund";
+import FundPortfolio from "../pages/FundPortfolio/FundPortfolio";
+import FundTrading from "../pages/FundTrading/FundTrading";
+import FundYield from "../pages/FundYield/FundYield";
 import { Exchange } from "../pages/Exchange/Exchange";
 import Actions from "../pages/Actions/Actions";
 import OrdersOverview from "../pages/OrdersOverview/OrdersOverview";
@@ -501,6 +504,14 @@ function FullApp() {
               <Route exact path="/create-fund">
                 <CreateFund />
               </Route>
+              <Route exact path="/fund/portfolio">
+                <FundPortfolio />
+              </Route>
+              <Route exact path="/fund/trading">
+                <FundTrading />
+              </Route>
+              <Route exact path="/fund/yield">
+                <FundYield />
               </Route>
               <Route exact path="/buy_gmx">
                 <BuyGMX />
