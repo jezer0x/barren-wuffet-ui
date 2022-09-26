@@ -8,7 +8,7 @@ import styles from "./FundPortfolio.module.css";
 const FundPortfolio: FunctionComponent = () => {
   return (
     <div className={styles.fundManagementPortfolio}>
-      <img className={styles.groupIcon} alt="" src="../locofy/group-2376912@2x.png" />
+      <img className={styles.groupIcon} alt="" src="../locofy/group-237691@2x.png" />
       <img className={styles.ellipseIcon} alt="" />
 
       <img className={styles.imageIconUser} alt="" src="../locofy/imageicon--user.svg" />

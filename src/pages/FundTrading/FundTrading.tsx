@@ -9,7 +9,7 @@ import styles from "./FundTrading.module.css";
 const FundTrading: FunctionComponent = () => {
   return (
     <div className={styles.fundManagementTrading1}>
-      <img className={styles.groupIcon} alt="" src="../locofy/group-2376913@2x.png" />
+      <img className={styles.groupIcon} alt="" src="../locofy/group-237691@2x.png" />
 
       <FundOrdersTable />
       <div className={styles.rectangleDiv} />

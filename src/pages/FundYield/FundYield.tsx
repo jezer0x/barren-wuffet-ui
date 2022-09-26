@@ -7,7 +7,7 @@ import styles from "./FundYield.module.css";
 const FundYield: FunctionComponent = () => {
   return (
     <div className={styles.fundManagementYield}>
-      <img className={styles.groupIcon} alt="" src="../locofy/group-2376917@2x.png" />
+      <img className={styles.groupIcon} alt="" src="../locofy/group-237691@2x.png" />
 
       <img className={styles.imageIconUser} alt="" src="../locofy/imageicon--user26.svg" />
       <div className={styles.bTCUSDTDiv}>BTCUSDT</div>
