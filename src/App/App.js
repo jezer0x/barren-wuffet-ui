@@ -47,6 +47,7 @@ import About from "../pages/Home/About";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Ecosystem from "../pages/Ecosystem/Ecosystem";
 import Stake from "../pages/Stake/Stake";
+import CreateFund from "../pages/CreateFund/CreateFund";
 import { Exchange } from "../pages/Exchange/Exchange";
 import Actions from "../pages/Actions/Actions";
 import OrdersOverview from "../pages/OrdersOverview/OrdersOverview";
@@ -89,7 +90,6 @@ import TermsAndConditions from "../pages/TermsAndConditions/TermsAndConditions";
 import { useLocalStorage } from "react-use";
 import { RedirectPopupModal } from "../components/ModalViews/RedirectModal";
 import { REDIRECT_POPUP_TIMESTAMP_KEY } from "../config/ui";
-import Jobs from "../pages/Jobs/Jobs";
 
 import { i18n } from "@lingui/core";
 import { I18nProvider } from "@lingui/react";
@@ -498,8 +498,9 @@ function FullApp() {
                   connectWallet={connectWallet}
                 />
               </Route>
-              <Route exact path="/jobs">
-                <Jobs />
+              <Route exact path="/create-fund">
+                <CreateFund />
+              </Route>
               </Route>
               <Route exact path="/buy_gmx">
                 <BuyGMX />

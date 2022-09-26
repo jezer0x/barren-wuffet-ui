@@ -28,7 +28,13 @@ const socialLinks = [
   { link: "https://discord.gg/jkBF9mpQ6w", name: "Discord", icon: discordIcon },
 ];
 
-export default function Footer({ showRedirectModal, redirectPopupTimestamp }) {
+export default function Footer({
+  showRedirectModal = () => {},
+  redirectPopupTimestamp = 0,
+}: {
+  showRedirectModal?: (any) => void;
+  redirectPopupTimestamp?: number;
+}) {
   const isHome = isHomeSite();
 
   return (
@@ -53,7 +59,8 @@ export default function Footer({ showRedirectModal, redirectPopupTimestamp }) {
           })}
         </div>
         <div className="Footer-links">
-          {footerLinks[isHome ? "home" : "app"].map(({ external, text, link, isAppLink }) => {
+          {/* @ts-ignore */}
+          {footerLinks[isHome ? "home" : "app"].map(({ external, text, link, isAppLink }): JSX.Element => {
             if (external) {
               return (
                 <a key={text} target="_blank" href={link} className="Footer-link" rel="noopener noreferrer">
