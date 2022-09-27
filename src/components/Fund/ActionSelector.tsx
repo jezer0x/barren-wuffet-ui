@@ -20,7 +20,7 @@ export default function ActionSelector(props) {
     <Menu>
       <Menu.Button as="div">
         <button className={cx("App-cta small transparent chart-token-selector")}>
-          <span className="chart-token-selector--current">{value.name}</span>
+          <span className="chart-token-selector--current">{value?.name}</span>
           {<FaChevronDown />}
         </button>
       </Menu.Button>
