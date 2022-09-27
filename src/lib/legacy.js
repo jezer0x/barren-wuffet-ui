@@ -1696,6 +1696,37 @@ export function getOrderKey(order) {
 }
 
 export function useAccountOrders(flagOrdersEnabled, overrideAccount) {
+  // comment this out to use the gmx fetch
+  // return useAccountOrdersGMX(flagOrdersEnabled, overrideAccount);
+
+  const { library, account: connectedAccount } = useWeb3React();
+  const active = true; // this is used in Actions.js so set active to always be true
+  const account = overrideAccount || connectedAccount;
+
+  const { chainId } = useChainId();
+  const shouldRequest = active && account && flagOrdersEnabled;
+
+  const orders = [
+    {
+      type: "Swap",
+      index: 1,
+      amountIn: 2.0,
+      minOut: 3,
+      path: ["0x0000000000000000000000000000000000000000"],
+      instrument: "Deposit",
+      price: 23.0,
+      quantity: 5,
+      executed: false,
+      triggerPrice: 22.0,
+      status: "pending",
+      time: new Date(),
+    },
+  ];
+
+  return [orders, () => {}, undefined];
+}
+
+export function useAccountOrdersGMX(flagOrdersEnabled, overrideAccount) {
   const { library, account: connectedAccount } = useWeb3React();
   const active = true; // this is used in Actions.js so set active to always be true
   const account = overrideAccount || connectedAccount;

@@ -15,6 +15,7 @@ import {
   getExchangeRate,
   getPositionForOrder,
   getUsd,
+  formatDateTime,
 } from "../../lib/legacy.js";
 import { handleCancelOrder } from "../../domain/legacy";
 import { getContract } from "../../config/Addresses";
@@ -81,15 +82,14 @@ export default function OrdersList(props) {
             </div>
           </th>
         )}
-
         <th>
           <div>
-            <Trans>Type</Trans>
+            <Trans>Time</Trans>
           </div>
         </th>
         <th>
           <div>
-            <Trans>Order</Trans>
+            <Trans>Instrument Type</Trans>
           </div>
         </th>
         <th>
@@ -99,7 +99,27 @@ export default function OrdersList(props) {
         </th>
         <th>
           <div>
-            <Trans>Mark Price</Trans>
+            <Trans>Quantity</Trans>
+          </div>
+        </th>
+        <th>
+          <div>
+            <Trans>Executed</Trans>
+          </div>
+        </th>
+        <th>
+          <div>
+            <Trans>Stop price / Avg price</Trans>
+          </div>
+        </th>
+        <th>
+          <div>
+            <Trans>Est. Total</Trans>
+          </div>
+        </th>
+        <th>
+          <div>
+            <Trans>Status</Trans>
           </div>
         </th>
       </tr>
@@ -113,7 +133,7 @@ export default function OrdersList(props) {
 
     return (
       <tr>
-        <td colSpan="5">
+        <td colSpan={5}>
           <Trans>No open orders</Trans>
         </td>
       </tr>
@@ -176,7 +196,16 @@ export default function OrdersList(props) {
                 />
               </div>
             </td>
-            <td className="Exchange-list-item-type">Limit</td>
+            {/* <td className="Exchange-list-item-type">Limit</td> */}
+            <td className="Exchange-list-item-type">{formatDateTime(order.time)}</td>
+            <td className="Exchange-list-item-type">{order.instrument}</td>
+            <td className="Exchange-list-item-type">{order.price}</td>
+            <td className="Exchange-list-item-type">{order.quantity}</td>
+            <td className="Exchange-list-item-type">{order.executed ? "Yes" : "No"}</td>
+            <td className="Exchange-list-item-type">{order.triggerPrice}</td>
+            <td className="Exchange-list-item-type">{order.total_estimate}</td>
+            <td className="Exchange-list-item-type">{order.status}</td>
+
             <td>
               Swap{" "}
               {formatAmount(
