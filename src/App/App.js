@@ -49,8 +49,8 @@ import Ecosystem from "../pages/Ecosystem/Ecosystem";
 import Stake from "../pages/Stake/Stake";
 import CreateFund from "../pages/CreateFund/CreateFund";
 import FundPortfolio from "../pages/FundPortfolio/FundPortfolio";
-import FundTrading from "../pages/FundTrading/FundTrading";
-import { FundTrading2 } from "../pages/FundTrading/FundTrading2";
+import FundTradingLoco from "../pages/FundTrading/FundTradingLoco";
+import { FundTrading } from "../pages/FundTrading/FundTrading";
 import FundYield from "../pages/FundYield/FundYield";
 import { Exchange } from "../pages/Exchange/Exchange";
 import Actions from "../pages/Actions/Actions";
@@ -508,11 +508,11 @@ function FullApp() {
               <Route exact path="/fund/portfolio">
                 <FundPortfolio />
               </Route>
-              <Route exact path="/fund/trading">
-                <FundTrading />
+              <Route exact path="/fund/tradingLoco">
+                <FundTradingLoco />
               </Route>
-              <Route exact path="/fund/trading2">
-                <FundTrading2
+              <Route exact path="/fund/trading">
+                <FundTrading
                   ref={exchangeRef}
                   savedShowPnlAfterFees={savedShowPnlAfterFees}
                   savedIsPnlInLeverage={savedIsPnlInLeverage}

@@ -1,360 +1,1002 @@
-import { FunctionComponent } from "react";
+// @ts-nocheck
+import React, { useEffect, useState, useMemo, useCallback, forwardRef, useImperativeHandle } from "react";
+import { Trans, t } from "@lingui/macro";
+import { Menu } from "@headlessui/react";
+import { useWeb3React } from "@web3-react/core";
+import useSWR from "swr";
+import { ethers } from "ethers";
+import cx from "classnames";
+
+import {
+  FUNDING_RATE_PRECISION,
+  BASIS_POINTS_DIVISOR,
+  MARGIN_FEE_BASIS_POINTS,
+  SWAP,
+  LONG,
+  SHORT,
+  USD_DECIMALS,
+  getExplorerUrl,
+  helperToast,
+  formatAmount,
+  bigNumberify,
+  getTokenInfo,
+  getPositionKey,
+  getPositionContractKey,
+  getLeverage,
+  useLocalStorageSerializeKey,
+  useLocalStorageByChainId,
+  getDeltaStr,
+  useChainId,
+  useAccountOrders,
+  getPageTitle,
+} from "../../lib/legacy";
+import { getConstant } from "../../config/chains";
+import { approvePlugin, useInfoTokens, useMinExecutionFee, cancelMultipleOrders } from "../../domain/legacy";
+
+import { getContract } from "../../config/Addresses";
+import { getTokens, getToken, getWhitelistedTokens, getTokenBySymbol } from "../../config/Tokens";
+
+import Reader from "../../abis/ReaderV2.json";
+import VaultV2 from "../../abis/VaultV2.json";
+import Router from "../../abis/Router.json";
+import Token from "../../abis/Token.json";
+
+import Checkbox from "../../components/Checkbox/Checkbox";
+import SwapBox from "../../components/Exchange/SwapBox";
+import FundBanner from "../../components/Fund/FundBanner";
+import ExchangeTVChart, { getChartToken } from "../../components/Exchange/ExchangeTVChart";
+import PositionsList from "../../components/Exchange/PositionsList";
+import OrdersList from "../../components/Exchange/OrdersList";
+import TradeHistory from "../../components/Exchange/TradeHistory";
+import ExchangeWalletTokens from "../../components/Exchange/ExchangeWalletTokens";
+import ExchangeBanner from "../../components/Exchange/ExchangeBanner";
+import Tab from "../../components/Tab/Tab";
 import Footer from "../../components/Footer/Footer";
 
-import FundOrdersTable from "../../components/FundOrdersTable/FundOrdersTable";
-import FundTabs from "../../components/FundTabs/FundTabs";
+import { fetcher } from "../../lib/contracts/fetcher";
+const { AddressZero } = ethers.constants;
 
-import styles from "./FundTrading.module.css";
+const PENDING_POSITION_VALID_DURATION = 600 * 1000;
+const UPDATED_POSITION_VALID_DURATION = 60 * 1000;
 
-const FundTrading: FunctionComponent = () => {
+const notifications = {};
+
+function pushSuccessNotification(chainId, message, e) {
+  const { transactionHash } = e;
+  const id = ethers.utils.id(message + transactionHash);
+  if (notifications[id]) {
+    return;
+  }
+
+  notifications[id] = true;
+
+  const txUrl = getExplorerUrl(chainId) + "tx/" + transactionHash;
+  helperToast.success(
+    <div>
+      {message}{" "}
+      <a href={txUrl} target="_blank" rel="noopener noreferrer">
+        View
+      </a>
+    </div>
+  );
+}
+
+function pushErrorNotification(chainId, message, e) {
+  const { transactionHash } = e;
+  const id = ethers.utils.id(message + transactionHash);
+  if (notifications[id]) {
+    return;
+  }
+
+  notifications[id] = true;
+
+  const txUrl = getExplorerUrl(chainId) + "tx/" + transactionHash;
+  helperToast.error(
+    <div>
+      {message}{" "}
+      <a href={txUrl} target="_blank" rel="noopener noreferrer">
+        View
+      </a>
+    </div>
+  );
+}
+
+function getFundingFee(data) {
+  let { entryFundingRate, cumulativeFundingRate, size } = data;
+  if (entryFundingRate && cumulativeFundingRate) {
+    return size.mul(cumulativeFundingRate.sub(entryFundingRate)).div(FUNDING_RATE_PRECISION);
+  }
+  return;
+}
+
+const getTokenAddress = (token, nativeTokenAddress) => {
+  if (token.address === AddressZero) {
+    return nativeTokenAddress;
+  }
+  return token.address;
+};
+
+function applyPendingChanges(position, pendingPositions) {
+  if (!pendingPositions) {
+    return;
+  }
+  const { key } = position;
+
+  if (
+    pendingPositions[key] &&
+    pendingPositions[key].updatedAt &&
+    pendingPositions[key].pendingChanges &&
+    pendingPositions[key].updatedAt + PENDING_POSITION_VALID_DURATION > Date.now()
+  ) {
+    const { pendingChanges } = pendingPositions[key];
+    if (pendingChanges.size && position.size.eq(pendingChanges.size)) {
+      return;
+    }
+
+    if (pendingChanges.expectingCollateralChange && !position.collateral.eq(pendingChanges.collateralSnapshot)) {
+      return;
+    }
+
+    position.hasPendingChanges = true;
+    position.pendingChanges = pendingChanges;
+  }
+}
+
+export function getPositions(
+  chainId,
+  positionQuery,
+  positionData,
+  infoTokens,
+  includeDelta,
+  showPnlAfterFees,
+  account,
+  pendingPositions,
+  updatedPositions
+) {
+  const propsLength = getConstant(chainId, "positionReaderPropsLength");
+  const positions = [];
+  const positionsMap = {};
+  if (!positionData) {
+    return { positions, positionsMap };
+  }
+  const { collateralTokens, indexTokens, isLong } = positionQuery;
+  for (let i = 0; i < collateralTokens.length; i++) {
+    const collateralToken = getTokenInfo(infoTokens, collateralTokens[i], true, getContract(chainId, "NATIVE_TOKEN"));
+    const indexToken = getTokenInfo(infoTokens, indexTokens[i], true, getContract(chainId, "NATIVE_TOKEN"));
+    const key = getPositionKey(account, collateralTokens[i], indexTokens[i], isLong[i]);
+    let contractKey;
+    if (account) {
+      contractKey = getPositionContractKey(account, collateralTokens[i], indexTokens[i], isLong[i]);
+    }
+
+    const position = {
+      key,
+      contractKey,
+      collateralToken,
+      indexToken,
+      isLong: isLong[i],
+      size: positionData[i * propsLength],
+      collateral: positionData[i * propsLength + 1],
+      averagePrice: positionData[i * propsLength + 2],
+      entryFundingRate: positionData[i * propsLength + 3],
+      cumulativeFundingRate: collateralToken.cumulativeFundingRate,
+      hasRealisedProfit: positionData[i * propsLength + 4].eq(1),
+      realisedPnl: positionData[i * propsLength + 5],
+      lastIncreasedTime: positionData[i * propsLength + 6].toNumber(),
+      hasProfit: positionData[i * propsLength + 7].eq(1),
+      delta: positionData[i * propsLength + 8],
+      markPrice: isLong[i] ? indexToken.minPrice : indexToken.maxPrice,
+    };
+
+    if (
+      updatedPositions &&
+      updatedPositions[key] &&
+      updatedPositions[key].updatedAt &&
+      updatedPositions[key].updatedAt + UPDATED_POSITION_VALID_DURATION > Date.now()
+    ) {
+      const updatedPosition = updatedPositions[key];
+      position.size = updatedPosition.size;
+      position.collateral = updatedPosition.collateral;
+      position.averagePrice = updatedPosition.averagePrice;
+      position.entryFundingRate = updatedPosition.entryFundingRate;
+    }
+
+    let fundingFee = getFundingFee(position);
+    position.fundingFee = fundingFee ? fundingFee : bigNumberify(0);
+    position.collateralAfterFee = position.collateral.sub(position.fundingFee);
+
+    position.closingFee = position.size.mul(MARGIN_FEE_BASIS_POINTS).div(BASIS_POINTS_DIVISOR);
+    position.positionFee = position.size.mul(MARGIN_FEE_BASIS_POINTS).mul(2).div(BASIS_POINTS_DIVISOR);
+    position.totalFees = position.positionFee.add(position.fundingFee);
+
+    position.pendingDelta = position.delta;
+
+    if (position.collateral.gt(0)) {
+      position.hasLowCollateral =
+        position.collateralAfterFee.lt(0) || position.size.div(position.collateralAfterFee.abs()).gt(50);
+
+      if (position.averagePrice && position.markPrice) {
+        const priceDelta = position.averagePrice.gt(position.markPrice)
+          ? position.averagePrice.sub(position.markPrice)
+          : position.markPrice.sub(position.averagePrice);
+        position.pendingDelta = position.size.mul(priceDelta).div(position.averagePrice);
+
+        position.delta = position.pendingDelta;
+
+        if (position.isLong) {
+          position.hasProfit = position.markPrice.gte(position.averagePrice);
+        } else {
+          position.hasProfit = position.markPrice.lte(position.averagePrice);
+        }
+      }
+
+      position.deltaPercentage = position.pendingDelta.mul(BASIS_POINTS_DIVISOR).div(position.collateral);
+
+      const { deltaStr, deltaPercentageStr } = getDeltaStr({
+        delta: position.pendingDelta,
+        deltaPercentage: position.deltaPercentage,
+        hasProfit: position.hasProfit,
+      });
+
+      position.deltaStr = deltaStr;
+      position.deltaPercentageStr = deltaPercentageStr;
+      position.deltaBeforeFeesStr = deltaStr;
+
+      let hasProfitAfterFees;
+      let pendingDeltaAfterFees;
+
+      if (position.hasProfit) {
+        if (position.pendingDelta.gt(position.totalFees)) {
+          hasProfitAfterFees = true;
+          pendingDeltaAfterFees = position.pendingDelta.sub(position.totalFees);
+        } else {
+          hasProfitAfterFees = false;
+          pendingDeltaAfterFees = position.totalFees.sub(position.pendingDelta);
+        }
+      } else {
+        hasProfitAfterFees = false;
+        pendingDeltaAfterFees = position.pendingDelta.add(position.totalFees);
+      }
+
+      position.hasProfitAfterFees = hasProfitAfterFees;
+      position.pendingDeltaAfterFees = pendingDeltaAfterFees;
+      position.deltaPercentageAfterFees = position.pendingDeltaAfterFees
+        .mul(BASIS_POINTS_DIVISOR)
+        .div(position.collateral);
+
+      const { deltaStr: deltaAfterFeesStr, deltaPercentageStr: deltaAfterFeesPercentageStr } = getDeltaStr({
+        delta: position.pendingDeltaAfterFees,
+        deltaPercentage: position.deltaPercentageAfterFees,
+        hasProfit: hasProfitAfterFees,
+      });
+
+      position.deltaAfterFeesStr = deltaAfterFeesStr;
+      position.deltaAfterFeesPercentageStr = deltaAfterFeesPercentageStr;
+
+      if (showPnlAfterFees) {
+        position.deltaStr = position.deltaAfterFeesStr;
+        position.deltaPercentageStr = position.deltaAfterFeesPercentageStr;
+      }
+
+      let netValue = position.hasProfit
+        ? position.collateral.add(position.pendingDelta)
+        : position.collateral.sub(position.pendingDelta);
+
+      netValue = netValue.sub(position.fundingFee);
+
+      if (showPnlAfterFees) {
+        netValue = netValue.sub(position.closingFee);
+      }
+
+      position.netValue = netValue;
+    }
+
+    position.leverage = getLeverage({
+      size: position.size,
+      collateral: position.collateral,
+      entryFundingRate: position.entryFundingRate,
+      cumulativeFundingRate: position.cumulativeFundingRate,
+      hasProfit: position.hasProfit,
+      delta: position.delta,
+      includeDelta,
+    });
+
+    positionsMap[key] = position;
+
+    applyPendingChanges(position, pendingPositions);
+
+    if (position.size.gt(0) || position.hasPendingChanges) {
+      positions.push(position);
+    }
+  }
+
+  return { positions, positionsMap };
+}
+
+export function getPositionQuery(tokens, nativeTokenAddress) {
+  const collateralTokens = [];
+  const indexTokens = [];
+  const isLong = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (token.isStable) {
+      continue;
+    }
+    if (token.isWrapped) {
+      continue;
+    }
+    collateralTokens.push(getTokenAddress(token, nativeTokenAddress));
+    indexTokens.push(getTokenAddress(token, nativeTokenAddress));
+    isLong.push(true);
+  }
+
+  for (let i = 0; i < tokens.length; i++) {
+    const stableToken = tokens[i];
+    if (!stableToken.isStable) {
+      continue;
+    }
+
+    for (let j = 0; j < tokens.length; j++) {
+      const token = tokens[j];
+      if (token.isStable) {
+        continue;
+      }
+      if (token.isWrapped) {
+        continue;
+      }
+      collateralTokens.push(stableToken.address);
+      indexTokens.push(getTokenAddress(token, nativeTokenAddress));
+      isLong.push(false);
+    }
+  }
+
+  return { collateralTokens, indexTokens, isLong };
+}
+
+export const FundTrading = forwardRef((props, ref) => {
+  const {
+    savedIsPnlInLeverage,
+    setSavedIsPnlInLeverage,
+    savedShowPnlAfterFees,
+    savedSlippageAmount,
+    pendingTxns,
+    setPendingTxns,
+    savedShouldShowPositionLines,
+    setSavedShouldShowPositionLines,
+    connectWallet,
+    savedShouldDisableOrderValidation,
+  } = props;
+  const [showBanner, setShowBanner] = useLocalStorageSerializeKey("showBanner", true);
+  const [bannerHidden, setBannerHidden] = useLocalStorageSerializeKey("bannerHidden", null);
+
+  const [pendingPositions, setPendingPositions] = useState({});
+  const [updatedPositions, setUpdatedPositions] = useState({});
+
+  const hideBanner = () => {
+    const hiddenLimit = new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000);
+    setBannerHidden(hiddenLimit);
+    setShowBanner(false);
+  };
+
+  useEffect(() => {
+    if (new Date() > new Date("2021-11-30")) {
+      setShowBanner(false);
+    } else {
+      if (bannerHidden && new Date(bannerHidden) > new Date()) {
+        setShowBanner(false);
+      } else {
+        setBannerHidden(null);
+        setShowBanner(true);
+      }
+    }
+  }, [showBanner, bannerHidden, setBannerHidden, setShowBanner]);
+
+  const { active, account, library } = useWeb3React();
+  const { chainId } = useChainId();
+  const currentAccount = account;
+
+  const nativeTokenAddress = getContract(chainId, "NATIVE_TOKEN");
+
+  const vaultAddress = getContract(chainId, "Vault");
+  const positionRouterAddress = getContract(chainId, "PositionRouter");
+  const readerAddress = getContract(chainId, "Reader");
+  const usdgAddress = getContract(chainId, "USDG");
+
+  const whitelistedTokens = getWhitelistedTokens(chainId);
+  const whitelistedTokenAddresses = whitelistedTokens.map((token) => token.address);
+
+  const positionQuery = getPositionQuery(whitelistedTokens, nativeTokenAddress);
+
+  const defaultCollateralSymbol = getConstant(chainId, "defaultCollateralSymbol");
+  const defaultTokenSelection = useMemo(
+    () => ({
+      [SWAP]: {
+        from: AddressZero,
+        to: getTokenBySymbol(chainId, defaultCollateralSymbol).address,
+      },
+      [LONG]: {
+        from: AddressZero,
+        to: AddressZero,
+      },
+      [SHORT]: {
+        from: getTokenBySymbol(chainId, defaultCollateralSymbol).address,
+        to: AddressZero,
+      },
+    }),
+    [chainId, defaultCollateralSymbol]
+  );
+
+  const [tokenSelection, setTokenSelection] = useLocalStorageByChainId(
+    chainId,
+    "Exchange-token-selection-v2",
+    defaultTokenSelection
+  );
+  const [swapOption, setSwapOption] = useLocalStorageByChainId(chainId, "Swap-option-v2", LONG);
+
+  const fromTokenAddress = tokenSelection[swapOption].from;
+  const toTokenAddress = tokenSelection[swapOption].to;
+
+  const setFromTokenAddress = useCallback(
+    (selectedSwapOption, address) => {
+      const newTokenSelection = JSON.parse(JSON.stringify(tokenSelection));
+      newTokenSelection[selectedSwapOption].from = address;
+      setTokenSelection(newTokenSelection);
+    },
+    [tokenSelection, setTokenSelection]
+  );
+
+  const setToTokenAddress = useCallback(
+    (selectedSwapOption, address) => {
+      const newTokenSelection = JSON.parse(JSON.stringify(tokenSelection));
+      newTokenSelection[selectedSwapOption].to = address;
+      if (selectedSwapOption === LONG || selectedSwapOption === SHORT) {
+        newTokenSelection[LONG].to = address;
+        newTokenSelection[SHORT].to = address;
+      }
+      setTokenSelection(newTokenSelection);
+    },
+    [tokenSelection, setTokenSelection]
+  );
+
+  const setMarket = (selectedSwapOption, toTokenAddress) => {
+    setSwapOption(selectedSwapOption);
+    const newTokenSelection = JSON.parse(JSON.stringify(tokenSelection));
+    newTokenSelection[selectedSwapOption].to = toTokenAddress;
+    if (selectedSwapOption === LONG || selectedSwapOption === SHORT) {
+      newTokenSelection[LONG].to = toTokenAddress;
+      newTokenSelection[SHORT].to = toTokenAddress;
+    }
+    setTokenSelection(newTokenSelection);
+  };
+
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isPendingConfirmation, setIsPendingConfirmation] = useState(false);
+
+  const tokens = getTokens(chainId);
+
+  const tokenAddresses = tokens.map((token) => token.address);
+  const { data: tokenBalances } = useSWR(active && [active, chainId, readerAddress, "getTokenBalances", account], {
+    fetcher: fetcher(library, Reader, [tokenAddresses]),
+  });
+
+  const { data: positionData, error: positionDataError } = useSWR(
+    active && [active, chainId, readerAddress, "getPositions", vaultAddress, account],
+    {
+      fetcher: fetcher(library, Reader, [
+        positionQuery.collateralTokens,
+        positionQuery.indexTokens,
+        positionQuery.isLong,
+      ]),
+    }
+  );
+
+  const positionsDataIsLoading = active && !positionData && !positionDataError;
+
+  const { data: fundingRateInfo } = useSWR([active, chainId, readerAddress, "getFundingRates"], {
+    fetcher: fetcher(library, Reader, [vaultAddress, nativeTokenAddress, whitelistedTokenAddresses]),
+  });
+
+  const { data: totalTokenWeights } = useSWR(
+    [`Exchange:totalTokenWeights:${active}`, chainId, vaultAddress, "totalTokenWeights"],
+    {
+      fetcher: fetcher(library, VaultV2, []),
+    }
+  );
+
+  const { data: usdgSupply } = useSWR([`Exchange:usdgSupply:${active}`, chainId, usdgAddress, "totalSupply"], {
+    // @ts-ignore
+    fetcher: fetcher(library, Token),
+  });
+
+  const orderBookAddress = getContract(chainId, "OrderBook");
+  const routerAddress = getContract(chainId, "Router");
+  const { data: orderBookApproved } = useSWR(
+    // @ts-ignore
+    active && [active, chainId, routerAddress, "approvedPlugins", account, orderBookAddress],
+    {
+      fetcher: fetcher(library, VaultV2, []),
+    }
+  );
+
+  const { data: positionRouterApproved } = useSWR(
+    // @ts-ignore
+    active && [active, chainId, routerAddress, "approvedPlugins", account, positionRouterAddress],
+    {
+      fetcher: fetcher(library, VaultV2, []),
+    }
+  );
+
+  const { infoTokens } = useInfoTokens(library, chainId, active, tokenBalances, fundingRateInfo);
+  const { minExecutionFee, minExecutionFeeUSD, minExecutionFeeErrorMessage } = useMinExecutionFee(
+    library,
+    active,
+    chainId,
+    infoTokens
+  );
+
+  useEffect(() => {
+    const fromToken = getTokenInfo(infoTokens, fromTokenAddress);
+    const toToken = getTokenInfo(infoTokens, toTokenAddress);
+    let selectedToken = getChartToken(swapOption, fromToken, toToken, chainId);
+    let currentTokenPriceStr = formatAmount(selectedToken.maxPrice, USD_DECIMALS, 2, true);
+    let title = getPageTitle(currentTokenPriceStr + ` | ${selectedToken.symbol}${selectedToken.isStable ? "" : "USD"}`);
+    document.title = title;
+  }, [tokenSelection, swapOption, infoTokens, chainId, fromTokenAddress, toTokenAddress]);
+
+  const { positions, positionsMap } = getPositions(
+    chainId,
+    positionQuery,
+    positionData,
+    infoTokens,
+    savedIsPnlInLeverage,
+    savedShowPnlAfterFees,
+    account,
+    pendingPositions,
+    updatedPositions
+  );
+
+  useImperativeHandle(ref, () => ({
+    onUpdatePosition(key, size, collateral, averagePrice, entryFundingRate, reserveAmount, realisedPnl) {
+      for (let i = 0; i < positions.length; i++) {
+        const position = positions[i];
+        if (position.contractKey === key) {
+          updatedPositions[position.key] = {
+            size,
+            collateral,
+            averagePrice,
+            entryFundingRate,
+            reserveAmount,
+            realisedPnl,
+            updatedAt: Date.now(),
+          };
+          setUpdatedPositions({ ...updatedPositions });
+          break;
+        }
+      }
+    },
+    onClosePosition(key, size, collateral, averagePrice, entryFundingRate, reserveAmount, realisedPnl, e) {
+      for (let i = 0; i < positions.length; i++) {
+        const position = positions[i];
+        if (position.contractKey === key) {
+          updatedPositions[position.key] = {
+            size: bigNumberify(0),
+            collateral: bigNumberify(0),
+            averagePrice,
+            entryFundingRate,
+            reserveAmount,
+            realisedPnl,
+            updatedAt: Date.now(),
+          };
+          setUpdatedPositions({ ...updatedPositions });
+          break;
+        }
+      }
+    },
+
+    onIncreasePosition(key, account, collateralToken, indexToken, collateralDelta, sizeDelta, isLong, price, fee, e) {
+      if (account !== currentAccount) {
+        return;
+      }
+
+      const indexTokenItem = getToken(chainId, indexToken);
+      const tokenSymbol = indexTokenItem.isWrapped ? getConstant(chainId, "nativeTokenSymbol") : indexTokenItem.symbol;
+
+      let message;
+      if (sizeDelta.eq(0)) {
+        message = `Deposited ${formatAmount(collateralDelta, USD_DECIMALS, 2, true)} USD into ${tokenSymbol} ${
+          isLong ? "Long" : "Short."
+        }`;
+      } else {
+        message = `Increased ${tokenSymbol} ${isLong ? "Long" : "Short"}, +${formatAmount(
+          sizeDelta,
+          USD_DECIMALS,
+          2,
+          true
+        )} USD.`;
+      }
+
+      pushSuccessNotification(chainId, message, e);
+    },
+
+    onDecreasePosition(key, account, collateralToken, indexToken, collateralDelta, sizeDelta, isLong, price, fee, e) {
+      if (account !== currentAccount) {
+        return;
+      }
+
+      const indexTokenItem = getToken(chainId, indexToken);
+      const tokenSymbol = indexTokenItem.isWrapped ? getConstant(chainId, "nativeTokenSymbol") : indexTokenItem.symbol;
+
+      let message;
+      if (sizeDelta.eq(0)) {
+        message = `Withdrew ${formatAmount(collateralDelta, USD_DECIMALS, 2, true)} USD from ${tokenSymbol} ${
+          isLong ? "Long" : "Short"
+        }.`;
+      } else {
+        message = `Decreased ${tokenSymbol} ${isLong ? "Long" : "Short"}, -${formatAmount(
+          sizeDelta,
+          USD_DECIMALS,
+          2,
+          true
+        )} USD.`;
+      }
+
+      pushSuccessNotification(chainId, message, e);
+    },
+
+    onCancelIncreasePosition(
+      account,
+      path,
+      indexToken,
+      amountIn,
+      minOut,
+      sizeDelta,
+      isLong,
+      acceptablePrice,
+      executionFee,
+      blockGap,
+      timeGap,
+      e
+    ) {
+      if (account !== currentAccount) {
+        return;
+      }
+      const indexTokenItem = getToken(chainId, indexToken);
+      const tokenSymbol = indexTokenItem.isWrapped ? getConstant(chainId, "nativeTokenSymbol") : indexTokenItem.symbol;
+
+      const message = `Could not increase ${tokenSymbol} ${
+        isLong ? "Long" : "Short"
+      } within the allowed slippage, you can adjust the allowed slippage in the settings on the top right of the page.`;
+
+      pushErrorNotification(chainId, message, e);
+
+      const key = getPositionKey(account, path[path.length - 1], indexToken, isLong);
+      pendingPositions[key] = {};
+      setPendingPositions({ ...pendingPositions });
+    },
+
+    onCancelDecreasePosition(
+      account,
+      path,
+      indexToken,
+      collateralDelta,
+      sizeDelta,
+      isLong,
+      receiver,
+      acceptablePrice,
+      minOut,
+      executionFee,
+      blockGap,
+      timeGap,
+      e
+    ) {
+      if (account !== currentAccount) {
+        return;
+      }
+      const indexTokenItem = getToken(chainId, indexToken);
+      const tokenSymbol = indexTokenItem.isWrapped ? getConstant(chainId, "nativeTokenSymbol") : indexTokenItem.symbol;
+
+      const message = `Could not decrease ${tokenSymbol} ${
+        isLong ? "Long" : "Short"
+      } within the allowed slippage, you can adjust the allowed slippage in the settings on the top right of the page.`;
+
+      pushErrorNotification(chainId, message, e);
+
+      const key = getPositionKey(account, path[path.length - 1], indexToken, isLong);
+      pendingPositions[key] = {};
+      setPendingPositions({ ...pendingPositions });
+    },
+  }));
+
+  const flagOrdersEnabled = true;
+  const [orders] = useAccountOrders(flagOrdersEnabled);
+
+  const [isWaitingForPluginApproval, setIsWaitingForPluginApproval] = useState(false);
+  const [isWaitingForPositionRouterApproval, setIsWaitingForPositionRouterApproval] = useState(false);
+  const [isPluginApproving, setIsPluginApproving] = useState(false);
+  const [isPositionRouterApproving, setIsPositionRouterApproving] = useState(false);
+  const [isCancelMultipleOrderProcessing, setIsCancelMultipleOrderProcessing] = useState(false);
+  const [cancelOrderIdList, setCancelOrderIdList] = useState([]);
+
+  const onMultipleCancelClick = useCallback(
+    async function () {
+      setIsCancelMultipleOrderProcessing(true);
+      try {
+        const tx = await cancelMultipleOrders(chainId, library, cancelOrderIdList, {
+          successMsg: t`Orders cancelled.`,
+          failMsg: t`Cancel failed.`,
+          sentMsg: t`Cancel submitted.`,
+          pendingTxns,
+          setPendingTxns,
+        });
+        const receipt = await tx.wait();
+        if (receipt.status === 1) {
+          setCancelOrderIdList([]);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsCancelMultipleOrderProcessing(false);
+      }
+    },
+    [
+      chainId,
+      library,
+      pendingTxns,
+      setPendingTxns,
+      setCancelOrderIdList,
+      cancelOrderIdList,
+      setIsCancelMultipleOrderProcessing,
+    ]
+  );
+
+  const approveOrderBook = () => {
+    setIsPluginApproving(true);
+    return approvePlugin(chainId, orderBookAddress, {
+      library,
+      pendingTxns,
+      setPendingTxns,
+      sentMsg: t`Enable orders sent.`,
+      failMsg: t`Enable orders failed.`,
+    })
+      .then(() => {
+        setIsWaitingForPluginApproval(true);
+      })
+      .finally(() => {
+        setIsPluginApproving(false);
+      });
+  };
+
+  const approvePositionRouter = ({ sentMsg, failMsg }) => {
+    setIsPositionRouterApproving(true);
+    return approvePlugin(chainId, positionRouterAddress, {
+      library,
+      pendingTxns,
+      setPendingTxns,
+      sentMsg,
+      failMsg,
+    })
+      .then(() => {
+        setIsWaitingForPositionRouterApproval(true);
+      })
+      .finally(() => {
+        setIsPositionRouterApproving(false);
+      });
+  };
+
+  const LIST_SECTIONS = ["Positions", flagOrdersEnabled ? "Orders" : undefined, "Trades"].filter(Boolean);
+  let [listSection, setListSection] = useLocalStorageByChainId(chainId, "List-section-v2", LIST_SECTIONS[0]);
+  const LIST_SECTIONS_LABELS = {
+    Orders: orders.length ? `Orders (${orders.length})` : undefined,
+    Positions: positions.length ? `Positions (${positions.length})` : undefined,
+  };
+  if (!LIST_SECTIONS.includes(listSection)) {
+    listSection = LIST_SECTIONS[0];
+  }
+
+  if (!getToken(chainId, toTokenAddress)) {
+    return null;
+  }
+
+  const renderCancelOrderButton = () => {
+    const orderText = cancelOrderIdList.length > 1 ? t`orders` : t`order`;
+    if (cancelOrderIdList.length === 0) return;
+    return (
+      <button
+        className="muted font-base cancel-order-btn"
+        disabled={isCancelMultipleOrderProcessing}
+        type="button"
+        onClick={onMultipleCancelClick}
+      >
+        <Trans>
+          Cancel {cancelOrderIdList.length} {orderText}
+        </Trans>
+      </button>
+    );
+  };
+
+  const getListSection = () => {
+    return (
+      <div>
+        <div className="Exchange-list-tab-container">
+          <Tab
+            options={LIST_SECTIONS}
+            optionLabels={LIST_SECTIONS_LABELS}
+            option={listSection}
+            onChange={(section) => setListSection(section)}
+            type="inline"
+            className="Exchange-list-tabs"
+          />
+          <div className="align-right Exchange-should-show-position-lines">
+            {renderCancelOrderButton()}
+            <Checkbox
+              isChecked={savedShouldShowPositionLines}
+              setIsChecked={setSavedShouldShowPositionLines}
+              className={cx("muted chart-positions", { active: savedShouldShowPositionLines })}
+            >
+              <span>
+                <Trans>Chart positions</Trans>
+              </span>
+            </Checkbox>
+          </div>
+        </div>
+        {listSection === "Positions" && (
+          <PositionsList
+            positionsDataIsLoading={positionsDataIsLoading}
+            pendingPositions={pendingPositions}
+            setPendingPositions={setPendingPositions}
+            setListSection={setListSection}
+            setIsWaitingForPluginApproval={setIsWaitingForPluginApproval}
+            setIsWaitingForPositionRouterApproval={setIsWaitingForPositionRouterApproval}
+            approveOrderBook={approveOrderBook}
+            approvePositionRouter={approvePositionRouter}
+            isPluginApproving={isPluginApproving}
+            isPositionRouterApproving={isPositionRouterApproving}
+            isWaitingForPluginApproval={isWaitingForPluginApproval}
+            isWaitingForPositionRouterApproval={isWaitingForPositionRouterApproval}
+            orderBookApproved={orderBookApproved}
+            positionRouterApproved={positionRouterApproved}
+            positions={positions}
+            positionsMap={positionsMap}
+            infoTokens={infoTokens}
+            active={active}
+            account={account}
+            library={library}
+            pendingTxns={pendingTxns}
+            setPendingTxns={setPendingTxns}
+            flagOrdersEnabled={flagOrdersEnabled}
+            savedIsPnlInLeverage={savedIsPnlInLeverage}
+            chainId={chainId}
+            nativeTokenAddress={nativeTokenAddress}
+            setMarket={setMarket}
+            orders={orders}
+            showPnlAfterFees={savedShowPnlAfterFees}
+            minExecutionFee={minExecutionFee}
+            minExecutionFeeUSD={minExecutionFeeUSD}
+            minExecutionFeeErrorMessage={minExecutionFeeErrorMessage}
+            usdgSupply={usdgSupply}
+            totalTokenWeights={totalTokenWeights}
+          />
+        )}
+        {listSection === "Orders" && (
+          <OrdersList
+            account={account}
+            active={active}
+            library={library}
+            pendingTxns={pendingTxns}
+            setPendingTxns={setPendingTxns}
+            infoTokens={infoTokens}
+            positionsMap={positionsMap}
+            chainId={chainId}
+            orders={orders}
+            totalTokenWeights={totalTokenWeights}
+            usdgSupply={usdgSupply}
+            savedShouldDisableOrderValidation={savedShouldDisableOrderValidation}
+            cancelOrderIdList={cancelOrderIdList}
+            setCancelOrderIdList={setCancelOrderIdList}
+          />
+        )}
+        {listSection === "Trades" && (
+          <TradeHistory
+            account={account}
+            forSingleAccount={true}
+            infoTokens={infoTokens}
+            getTokenInfo={getTokenInfo}
+            chainId={chainId}
+            nativeTokenAddress={nativeTokenAddress}
+            shouldShowPaginationButtons={true}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const onSelectWalletToken = (token) => {
+    setFromTokenAddress(swapOption, token.address);
+  };
+
+  const renderChart = () => {
+    return (
+      <ExchangeTVChart
+        fromTokenAddress={fromTokenAddress}
+        toTokenAddress={toTokenAddress}
+        infoTokens={infoTokens}
+        swapOption={swapOption}
+        chainId={chainId}
+        positions={positions}
+        savedShouldShowPositionLines={savedShouldShowPositionLines}
+        orders={orders}
+        setToTokenAddress={setToTokenAddress}
+      />
+    );
+  };
+
   return (
-    <div className={styles.fundManagementTrading1}>
-      <img className={styles.groupIcon} alt="" src="../locofy/group-237691@2x.png" />
-
-      <FundOrdersTable />
-      <div className={styles.rectangleDiv} />
-      <div className={styles.rectangleDiv1} />
-      <img className={styles.vectorIcon} alt="" src="../locofy/vector-11.svg" />
-      <img className={styles.vectorIcon1} alt="" src="../locofy/vector-11.svg" />
-      <div className={styles.rectangleDiv2} />
-      <div className={styles.rectangleDiv3} />
-      <div className={styles.groupDiv}>
-        <div className={styles.createNewDiv}>Create new</div>
-        <div className={styles.activeOrdersDiv}>Active orders</div>
-      </div>
-      <img className={styles.imageIconUser} alt="" src="../locofy/imageicon--user10.svg" />
-      <div className={styles.bTCUSDTDiv}>BTCUSDT</div>
-      <div className={styles.groupDiv1}>
-        <div className={styles.rectangleDiv4} />
-        <div className={styles.availableDiv}>Available</div>
-        <div className={styles.uSDTDiv}>18.294 USDT</div>
-        <div className={styles.bTCUSDTDiv1}>BTC / USDT</div>
-        <div className={styles.marketOrderDiv}>Market order</div>
-        <img className={styles.vectorIcon2} alt="" src="../locofy/vector6.svg" />
-      </div>
-      <img className={styles.imageIconUser1} alt="" src="../locofy/imageicon--user.svg" />
-      <div className={styles.bTCUSDTDiv2}>BTCUSDT</div>
-      <div className={styles.groupDiv2}>
-        <div className={styles.groupDiv3}>
-          <div className={styles.rectangleDiv5} />
-          <img className={styles.groupIcon1} alt="" src="../locofy/group-2376953.svg" />
-          <img className={styles.imageIconUser2} alt="" src="../locofy/imageicon--user12.svg" />
-          <div className={styles.bTCUSDTDiv3}>BTCUSDT</div>
+    <div className="Exchange page-layout">
+      <FundBanner />
+      {showBanner && <ExchangeBanner hideBanner={hideBanner} />}
+      <div className="Exchange-content">
+        <div className="Exchange-left">
+          {renderChart()}
+          <div className="Exchange-lists large">{getListSection()}</div>
         </div>
-        <div className={styles.groupDiv4}>
-          <div className={styles.rectangleDiv6} />
-          <div className={styles.rectangleDiv7} />
-          <div className={styles.hVolumeDiv}>24h Volume</div>
-          <div className={styles.div}>$ 1.118.294</div>
-          <div className={styles.frameDiv}>
-            <div className={styles.frameDiv1}>
-              <div className={styles.bTCUSDTDiv4}>BTC / USDT</div>
-              <div className={styles.bitcoinDiv}>Bitcoin</div>
-            </div>
-          </div>
-          <div className={styles.chooseActionDiv}>{`Choose action `}</div>
-          <img className={styles.vectorIcon3} alt="" src="../locofy/vector6.svg" />
-          <div className={styles.uniswapDiv}>Uniswap</div>
-          <div className={styles.div1}>$23,738</div>
-          <div className={styles.tagPercentaceDefault}>
-            <div className={styles.tagPercentaceMainDiv}>
-              <div className={styles.div2}>+23,6%</div>
-            </div>
-          </div>
-          <img className={styles.vectorIcon4} alt="" src="../locofy/vector6.svg" />
-        </div>
-      </div>
-      <div className={styles.groupDiv5}>
-        <div className={styles.groupDiv6}>
-          <div className={styles.textSmallMainDiv}>
-            <div className={styles.textTextMediumMain}>
-              <div className={styles.menuTitleDiv}>Jul 18</div>
-            </div>
-          </div>
-          <div className={styles.textSmallMainDiv1}>
-            <div className={styles.textTextMediumMain}>
-              <div className={styles.menuTitleDiv}>Jul 19</div>
-            </div>
-          </div>
-          <div className={styles.textSmallMainDiv2}>
-            <div className={styles.textTextMediumMain}>
-              <div className={styles.menuTitleDiv}>Jul 20</div>
-            </div>
-          </div>
-          <div className={styles.textSmallMainDiv3}>
-            <div className={styles.textTextMediumMain}>
-              <div className={styles.menuTitleDiv}>Jul 21</div>
-            </div>
-          </div>
-          <div className={styles.textSmallMainDiv4}>
-            <div className={styles.textTextMediumMain}>
-              <div className={styles.menuTitleDiv}>Jul 22</div>
+        <div className="Exchange-right">
+          <SwapBox
+            pendingPositions={pendingPositions}
+            setPendingPositions={setPendingPositions}
+            setIsWaitingForPluginApproval={setIsWaitingForPluginApproval}
+            setIsWaitingForPositionRouterApproval={setIsWaitingForPositionRouterApproval}
+            approveOrderBook={approveOrderBook}
+            approvePositionRouter={approvePositionRouter}
+            isPluginApproving={isPluginApproving}
+            isPositionRouterApproving={isPositionRouterApproving}
+            isWaitingForPluginApproval={isWaitingForPluginApproval}
+            isWaitingForPositionRouterApproval={isWaitingForPositionRouterApproval}
+            orderBookApproved={orderBookApproved}
+            positionRouterApproved={positionRouterApproved}
+            orders={orders}
+            flagOrdersEnabled={flagOrdersEnabled}
+            chainId={chainId}
+            infoTokens={infoTokens}
+            active={active}
+            connectWallet={connectWallet}
+            library={library}
+            account={account}
+            positionsMap={positionsMap}
+            fromTokenAddress={fromTokenAddress}
+            setFromTokenAddress={setFromTokenAddress}
+            toTokenAddress={toTokenAddress}
+            setToTokenAddress={setToTokenAddress}
+            swapOption={swapOption}
+            setSwapOption={setSwapOption}
+            pendingTxns={pendingTxns}
+            setPendingTxns={setPendingTxns}
+            tokenSelection={tokenSelection}
+            setTokenSelection={setTokenSelection}
+            isConfirming={isConfirming}
+            setIsConfirming={setIsConfirming}
+            isPendingConfirmation={isPendingConfirmation}
+            setIsPendingConfirmation={setIsPendingConfirmation}
+            savedIsPnlInLeverage={savedIsPnlInLeverage}
+            setSavedIsPnlInLeverage={setSavedIsPnlInLeverage}
+            nativeTokenAddress={nativeTokenAddress}
+            savedSlippageAmount={savedSlippageAmount}
+            totalTokenWeights={totalTokenWeights}
+            usdgSupply={usdgSupply}
+            savedShouldDisableOrderValidation={savedShouldDisableOrderValidation}
+            minExecutionFee={minExecutionFee}
+            minExecutionFeeUSD={minExecutionFeeUSD}
+            minExecutionFeeErrorMessage={minExecutionFeeErrorMessage}
+          />
+          <div className="Exchange-wallet-tokens">
+            <div className="Exchange-wallet-tokens-content">
+              <ExchangeWalletTokens tokens={tokens} infoTokens={infoTokens} onSelectToken={onSelectWalletToken} />
             </div>
           </div>
         </div>
+        <div className="Exchange-lists small">{getListSection()}</div>
       </div>
-      <div className={styles.div3}>$23,000</div>
-      <div className={styles.div4}>$22,000</div>
-      <div className={styles.div5}>$21,000</div>
-      <div className={styles.div6}>$20,000</div>
-      <div className={styles.div7}>$19,000</div>
-      <div className={styles.uTC8LogAuto}>
-        <span>{`15:03:08 (UTC+8)       %      Log       `}</span>
-        <span className={styles.autoSpan}>Auto</span>
-      </div>
-      <img className={styles.groupIcon2} alt="" src="../locofy/group-74.svg" />
-      <div className={styles.groupDiv7}>
-        <div className={styles.tagPagginationOptionDiv}>
-          <div className={styles.tagPagginationMainDiv}>
-            <div className={styles.taglineDiv}>1H</div>
-          </div>
-        </div>
-        <div className={styles.tagPagginationOptionDiv1}>
-          <div className={styles.tagPagginationMainDiv}>
-            <div className={styles.taglineDiv}>3H</div>
-          </div>
-        </div>
-        <div className={styles.tagPagginationOptionDiv2}>
-          <div className={styles.tagPagginationMainDiv}>
-            <div className={styles.taglineDiv}>5H</div>
-          </div>
-        </div>
-        <div className={styles.tagPagginationOptionDiv3}>
-          <div className={styles.tagPagginationMainDiv}>
-            <div className={styles.taglineDiv}>1D</div>
-          </div>
-        </div>
-        <div className={styles.tagPagginationOptionDiv4}>
-          <div className={styles.tagPagginationMainDiv}>
-            <div className={styles.taglineDiv}>1W</div>
-          </div>
-        </div>
-        <div className={styles.tagPagginationOptionDiv5}>
-          <div className={styles.tagPagginationMainDiv}>
-            <div className={styles.taglineDiv}>1M</div>
-          </div>
-        </div>
-      </div>
-      <div className={styles.groupDiv8}>
-        <div className={styles.rectangleDiv8} />
-        <div className={styles.rectangleDiv9} />
-        <div className={styles.buyDiv}>Buy</div>
-        <div className={styles.sellDiv}>Sell</div>
-      </div>
-      <div className={styles.rectangleDiv10} />
-      <div className={styles.rectangleDiv11} />
-      <div className={styles.rectangleDiv12} />
-      <div className={styles.rectangleDiv13} />
-      <div className={styles.div8}>25%</div>
-      <div className={styles.div9}>50%</div>
-      <div className={styles.div10}>75%</div>
-      <div className={styles.maxDiv}>Max</div>
-      <div className={styles.rectangleDiv14} />
-      <div className={styles.rectangleDiv15} />
-      <div className={styles.sPOTDiv}>SPOT</div>
-      <img className={styles.vectorIcon5} alt="" src="../locofy/vector15.svg" />
-      <div className={styles.rectangleDiv16} />
-      <div className={styles.rectangleDiv17} />
-      <div className={styles.rectangleDiv18} />
-      <div className={styles.rectangleDiv19} />
-      <div className={styles.rectangleDiv20} />
-      <div className={styles.rectangleDiv21} />
-      <div className={styles.rectangleDiv22} />
-      <div className={styles.rectangleDiv23} />
-      <div className={styles.rectangleDiv24} />
-      <div className={styles.cRVDiv}>CRV</div>
-      <div className={styles.uSDTDiv1}>USDT</div>
-      <div className={styles.cRVDiv1}>CRV</div>
-      <div className={styles.uSDTDiv2}>USDT</div>
-      <div className={styles.maxDiv1}>Max</div>
-      <div className={styles.div11}>0.00000000</div>
-      <div className={styles.priceDiv}>Price</div>
-      <div className={styles.marketUSDTDiv}> Market USDT</div>
-      <div className={styles.batchSizeDiv}>Batch size</div>
-      <div className={styles.batchSizeDiv1}>Batch size</div>
-      <div className={styles.intervalDiv}>Interval</div>
-      <div className={styles.feesDiv}>Fees</div>
-      <div className={styles.estCompletionDiv}>Est Completion</div>
-      <div className={styles.div12}>- 3%</div>
-      <div className={styles.minDiv}>1 min</div>
-      <div className={styles.div13}>- 3%</div>
-      <div className={styles.h33mDiv}>0h 33m</div>
-      <div className={styles.maxDiv2}>Max</div>
-      <div className={styles.div14}>0.327543</div>
-      <div className={styles.div15}>0.00000000</div>
-      <div className={styles.uSDTDiv3}>USDT</div>
-      <div className={styles.div16}>0</div>
-      <div className={styles.eTHDiv}>ETH</div>
-      <div className={styles.div17}>3%</div>
-      <div className={styles.minDiv1}>Min</div>
-      <div className={styles.div18}>1</div>
-      <div className={styles.div19}>-</div>
-      <img className={styles.ellipseIcon} alt="" src="../locofy/ellipse-291.svg" />
-      <img className={styles.vectorIcon6} alt="" src="../locofy/vector16.svg" />
-      <div className={styles.sANDUSDTDiv}>SANDUSDT</div>
-      <div className={styles.div20}>0.16549</div>
-      <div className={styles.div21}>0.16549</div>
-      <div className={styles.tagPercentaceDefault1}>
-        <div className={styles.tagPercentaceMainDiv1}>
-          <div className={styles.div22}>done</div>
-        </div>
-      </div>
-      <img className={styles.ellipseIcon1} alt="" src="../locofy/ellipse-30.svg" />
-      <div className={styles.dOGEUSDTDiv}>DOGEUSDT</div>
-      <div className={styles.div23}>0.16549</div>
-      <img className={styles.vectorIcon7} alt="" src="../locofy/vector17.svg" />
-      <div className={styles.div24}>0.16549</div>
-      <div className={styles.tagPercentaceDefault2}>
-        <div className={styles.tagPercentaceMainDiv1}>
-          <div className={styles.div22}>done</div>
-        </div>
-      </div>
-      <div className={styles.fTMUSDTDiv}>FTMUSDT</div>
-      <div className={styles.div26}>0.16549</div>
-      <img className={styles.ellipseIcon2} alt="" src="../locofy/ellipse-291.svg" />
-      <img className={styles.vectorIcon8} alt="" src="../locofy/vector16.svg" />
-      <div className={styles.div27}>0.16549</div>
-      <img className={styles.vectorIcon9} alt="" src="../locofy/vector-111.svg" />
-      <img className={styles.vectorIcon10} alt="" src="../locofy/vector-111.svg" />
-      <img className={styles.vectorIcon11} alt="" src="../locofy/vector-111.svg" />
-      <div className={styles.tagPercentaceDefault3}>
-        <div className={styles.tagPercentaceMainDiv3}>
-          <div className={styles.div28}>done</div>
-        </div>
-      </div>
-      <div className={styles.div29}>$ 42</div>
-      <div className={styles.div30}>$ 42</div>
-      <div className={styles.div31}>$ 42</div>
-      <div className={styles.div32}>$ 42</div>
-      <div className={styles.div33}>-</div>
-      <div className={styles.div34}>+</div>
-      <div className={styles.div35}>-</div>
-      <div className={styles.depositDiv}>Deposit</div>
-      <div className={styles.div36}>1 657</div>
-      <div className={styles.div37}>-</div>
-      <img className={styles.ellipseIcon3} alt="" src="../locofy/ellipse-30.svg" />
-      <img className={styles.vectorIcon12} alt="" src="../locofy/vector17.svg" />
-      <div className={styles.div38}>1 657</div>
-      <div className={styles.div39}>+$23,738</div>
-      <div className={styles.pMDiv}>11:34 PM</div>
-      <div className={styles.tagPercentaceDefault4}>
-        <div className={styles.tagPercentaceMainDiv4}>
-          <div className={styles.div40}>pending</div>
-        </div>
-      </div>
-      <div className={styles.timeDiv}>Time</div>
-      <div className={styles.instrumentDiv}>Instrument</div>
-      <div className={styles.typeDiv}>Type</div>
-      <div className={styles.sideDiv}>Side</div>
-      <div className={styles.priceDiv1}>Price</div>
-      <div className={styles.quantityDiv}>Quantity</div>
-      <div className={styles.executedDiv}>Executed</div>
-      <div className={styles.stopPriceDiv}>Stop price</div>
-      <div className={styles.estTotalDiv}>Est. Total</div>
-      <div className={styles.statusDiv}>Status</div>
-      <div className={styles.avgPriceDiv}>Avg price</div>
-      <div className={styles.tagPercentaceMainDiv5}>
-        <div className={styles.div28}>done</div>
-      </div>
-      <div className={styles.tagPercentaceMainDiv6}>
-        <div className={styles.div28}>done</div>
-      </div>
-      <div className={styles.div43}>-$576</div>
-      <div className={styles.aMDiv}>06:01 AM</div>
-      <div className={styles.div44}>+$3500</div>
-      <div className={styles.aMDiv1}>02:10 AM</div>
-      <div className={styles.div45}>+$791</div>
-      <div className={styles.pMDiv1}>06:45 PM</div>
-      <img className={styles.vectorIcon13} alt="" src="../locofy/vector15.svg" />
-      <img className={styles.vectorIcon14} alt="" src="../locofy/vector15.svg" />
-      <img className={styles.vectorIcon15} alt="" src="../locofy/vector22.svg" />
-      <img className={styles.imageIconWallet} alt="" src="../locofy/imageicon--wallet3.svg" />
-      <img className={styles.imageIconETH} alt="" src="../locofy/imageicon--eth3.svg" />
-
-      <div className={styles.groupDiv9}>
-        <div className={styles.groupDiv10}>
-          <div className={styles.rectangleDiv25} />
-          <img className={styles.imageIconUser3} alt="" src="../locofy/imageicon--user8.svg" />
-          <div className={styles.bTCUSDTDiv5}>BTCUSDT</div>
-        </div>
-        <div className={styles.rectangleDiv26} />
-        <img className={styles.ellipseIcon4} alt="" src="../locofy/ellipse-1916@2x.png" />
-        <div className={styles.openSeaFundDiv}>OpenSea fund</div>
-        <img className={styles.vectorIcon16} alt="" src="../locofy/vector6.svg" />
-        <div className={styles.groupDiv11}>
-          <div className={styles.groupDiv12}>
-            <div className={styles.groupDiv12}>
-              <div className={styles.groupDiv14}>
-                <div className={styles.groupDiv14}>
-                  <div className={styles.shareDiv}>{`Share `}</div>
-                  <img className={styles.groupIcon3} alt="" src="../locofy/group-2376731.svg" />
-                </div>
-              </div>
-              <img className={styles.groupIcon4} alt="" src="../locofy/group-237682.svg" />
-            </div>
-          </div>
-        </div>
-        <div className={styles.div46}>$123,987</div>
-        <img className={styles.vectorIcon17} alt="" src="../locofy/vector7.svg" />
-        <div className={styles.portfolioValueDiv}>Portfolio value</div>
-        <div className={styles.startingValue500}>Starting Value: $500</div>
-        <div className={styles.div47}>+$2560.78</div>
-        <div className={styles.tagPercentaceMainDiv7}>
-          <div className={styles.div2}>+14.67%</div>
-        </div>
-        <div className={styles.groupDiv16}>
-          <div className={styles.groupDiv17}>
-            <div className={styles.rectangleDiv27} />
-            <div className={styles.hDiv}>24H</div>
-          </div>
-          <div className={styles.groupDiv18}>
-            <div className={styles.rectangleDiv27} />
-            <div className={styles.dDiv}>1D</div>
-          </div>
-          <div className={styles.groupDiv19}>
-            <div className={styles.rectangleDiv27} />
-            <div className={styles.dDiv}>7D</div>
-          </div>
-          <div className={styles.groupDiv20}>
-            <div className={styles.rectangleDiv27} />
-            <div className={styles.mDiv}>1M</div>
-          </div>
-        </div>
-        <div className={styles.groupDiv21}>
-          <div className={styles.bMMk4gdD263q7QJt3VLWnG2x1mt9HVDiv}>8BMMk4gdD263q7QJt3VLWnG2x1mt9HV56b4vX774n4Sc</div>
-          <img className={styles.groupIcon5} alt="" src="../locofy/group-237695.svg" />
-          <img className={styles.groupIcon6} alt="" src="../locofy/group-237694.svg" />
-        </div>
-        <FundTabs />
-        <div className={styles.groupDiv23}>
-          <div className={styles.dataUpdated1minAgo}>{`Data updated 1min ago `}</div>
-          <img className={styles.groupIcon7} alt="" src="../locofy/group-237699.svg" />
-        </div>
-        <img className={styles.vectorIcon18} alt="" src="../locofy/vector-85.svg" />
-        <div className={styles.groupDiv24}>
-          <div className={styles.expiryInDiv}>Expiry in:</div>
-          <div className={styles.investorsDiv}>Investors:</div>
-          <div className={styles.tagPercentaceMainDiv8}>
-            <div className={styles.div2}>751 days</div>
-          </div>
-          <div className={styles.tagPercentaceMainDiv9}>
-            <div className={styles.div2}>103</div>
-          </div>
-        </div>
-      </div>
-      <div className={styles.groupDiv25}>
-        <div className={styles.groupDiv26}>
-          <div className={styles.groupDiv26}>
-            <div className={styles.rectangleDiv32} />
-            <div className={styles.enableTWAPDiv}>Enable TWAP</div>
-            <img className={styles.groupIcon8} alt="" src="../locofy/group-237854.svg" />
-          </div>
-        </div>
-      </div>
-      <img className={styles.carbonarrowDownIcon} alt="" src="../locofy/carbonarrowdown.svg" />
       <Footer />
     </div>
   );
-};
-
-export default FundTrading;
+});
