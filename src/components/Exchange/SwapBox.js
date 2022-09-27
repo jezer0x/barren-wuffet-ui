@@ -1886,11 +1886,9 @@ export default function SwapBox(props) {
                   )}
                   {!fromUsdMin && "Pay"}
                 </div>
-                {fromBalance && (
-                  <div className="muted align-right clickable" onClick={setFromValueToMaximumAvailable}>
-                    Balance: {formatAmount(fromBalance, fromToken.decimals, 4, true)}
-                  </div>
-                )}
+                <div className="muted align-right clickable" onClick={setFromValueToMaximumAvailable}>
+                  Balance: {formatAmount(fromBalance, fromToken.decimals, 4, true, "0.0")}
+                </div>
               </div>
               <div className="Exchange-swap-section-bottom">
                 <div className="Exchange-swap-input-container">
@@ -2450,7 +2448,7 @@ export default function SwapBox(props) {
           )}
         </div>
       )}
-      <div className="Exchange-swap-market-box App-box App-box-border">
+      {/* <div className="Exchange-swap-market-box App-box App-box-border">
         <div className="Exchange-swap-market-box-title">
           <Trans>Useful Links</Trans>
         </div>
@@ -2476,7 +2474,7 @@ export default function SwapBox(props) {
             </a>
           </div>
         </div>
-      </div>
+      </div> */}
       {renderErrorModal()}
       {renderOrdersToa()}
       {isConfirming && (
