@@ -15,7 +15,6 @@ import {
   getExchangeRate,
   getPositionForOrder,
   getUsd,
-  formatDateTime,
 } from "../../lib/legacy.js";
 import { handleCancelOrder } from "../../domain/legacy";
 import { getContract } from "../../config/Addresses";
@@ -82,14 +81,15 @@ export default function OrdersList(props) {
             </div>
           </th>
         )}
+
         <th>
           <div>
-            <Trans>Time</Trans>
+            <Trans>Type</Trans>
           </div>
         </th>
         <th>
           <div>
-            <Trans>Instrument Type</Trans>
+            <Trans>Order</Trans>
           </div>
         </th>
         <th>
@@ -99,27 +99,7 @@ export default function OrdersList(props) {
         </th>
         <th>
           <div>
-            <Trans>Quantity</Trans>
-          </div>
-        </th>
-        <th>
-          <div>
-            <Trans>Executed</Trans>
-          </div>
-        </th>
-        <th>
-          <div>
-            <Trans>Stop price / Avg price</Trans>
-          </div>
-        </th>
-        <th>
-          <div>
-            <Trans>Est. Total</Trans>
-          </div>
-        </th>
-        <th>
-          <div>
-            <Trans>Status</Trans>
+            <Trans>Mark Price</Trans>
           </div>
         </th>
       </tr>
@@ -144,11 +124,11 @@ export default function OrdersList(props) {
     (order) => {
       return (
         <>
-          <td>
+          {/* <td>
             <button className="Exchange-list-action" onClick={() => onEditClick(order)}>
               <Trans>Edit</Trans>
             </button>
-          </td>
+          </td> */}
           <td>
             <button className="Exchange-list-action" onClick={() => onCancelClick(order)}>
               <Trans>Cancel</Trans>
@@ -157,7 +137,8 @@ export default function OrdersList(props) {
         </>
       );
     },
-    [onEditClick, onCancelClick]
+    // [onEditClick, onCancelClick]
+    [onCancelClick]
   );
 
   const renderLargeList = useCallback(() => {
@@ -196,16 +177,7 @@ export default function OrdersList(props) {
                 />
               </div>
             </td>
-            {/* <td className="Exchange-list-item-type">Limit</td> */}
-            <td className="Exchange-list-item-type">{formatDateTime(order.time)}</td>
-            <td className="Exchange-list-item-type">{order.instrument}</td>
-            <td className="Exchange-list-item-type">{order.price}</td>
-            <td className="Exchange-list-item-type">{order.quantity}</td>
-            <td className="Exchange-list-item-type">{order.executed ? "Yes" : "No"}</td>
-            <td className="Exchange-list-item-type">{order.triggerPrice}</td>
-            <td className="Exchange-list-item-type">{order.total_estimate}</td>
-            <td className="Exchange-list-item-type">{order.status}</td>
-
+            <td className="Exchange-list-item-type">Limit</td>
             <td>
               Swap{" "}
               {formatAmount(
@@ -400,9 +372,9 @@ export default function OrdersList(props) {
                 <>
                   <div className="App-card-divider"></div>
                   <div className="App-card-options">
-                    <button className="App-button-option App-card-option" onClick={() => onEditClick(order)}>
+                    {/* <button className="App-button-option App-card-option" onClick={() => onEditClick(order)}>
                       <Trans>Edit</Trans>
-                    </button>
+                    </button> */}
                     <button className="App-button-option App-card-option" onClick={() => onCancelClick(order)}>
                       <Trans>Cancel</Trans>
                     </button>
@@ -477,9 +449,9 @@ export default function OrdersList(props) {
               <>
                 <div className="App-card-divider"></div>
                 <div className="App-card-options">
-                  <button className="App-button-option App-card-option" onClick={() => onEditClick(order)}>
+                  {/* <button className="App-button-option App-card-option" onClick={() => onEditClick(order)}>
                     <Trans>Edit</Trans>
-                  </button>
+                  </button> */}
                   <button className="App-button-option App-card-option" onClick={() => onCancelClick(order)}>
                     <Trans>Cancel</Trans>
                   </button>
