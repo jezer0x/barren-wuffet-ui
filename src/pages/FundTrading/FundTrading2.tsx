@@ -43,6 +43,7 @@ import Token from "../../abis/Token.json";
 
 import Checkbox from "../../components/Checkbox/Checkbox";
 import SwapBox from "../../components/Exchange/SwapBox";
+import FundBanner from "../../components/Fund/FundBanner";
 import ExchangeTVChart, { getChartToken } from "../../components/Exchange/ExchangeTVChart";
 import PositionsList from "../../components/Exchange/PositionsList";
 import OrdersList from "../../components/Exchange/OrdersList";
@@ -52,7 +53,6 @@ import ExchangeBanner from "../../components/Exchange/ExchangeBanner";
 import Tab from "../../components/Tab/Tab";
 import Footer from "../../components/Footer/Footer";
 
-import "./FundTrading2.css";
 import { fetcher } from "../../lib/contracts/fetcher";
 const { AddressZero } = ethers.constants;
 
@@ -933,6 +933,7 @@ export const FundTrading2 = forwardRef((props, ref) => {
 
   return (
     <div className="Exchange page-layout">
+      <FundBanner />
       {showBanner && <ExchangeBanner hideBanner={hideBanner} />}
       <div className="Exchange-content">
         <div className="Exchange-left">

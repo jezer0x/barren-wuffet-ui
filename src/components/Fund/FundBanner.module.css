@@ -1898,11 +1898,9 @@
   color: #9191a7;
 }
 .groupDiv9 {
-  position: absolute;
-  top: 150px;
-  left: 395px;
+  position: relative;
   width: 1110px;
-  height: 244px;
+  height: 294px;
   font-size: 11px;
 }
 .rectangleDiv32 {
