@@ -48,10 +48,12 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import Ecosystem from "../pages/Ecosystem/Ecosystem";
 import Stake from "../pages/Stake/Stake";
 import CreateFund from "../pages/CreateFund/CreateFund";
-import FundPortfolio from "../pages/FundPortfolio/FundPortfolio";
+import { FundPortfolio } from "../pages/FundPortfolio/FundPortfolio";
+import FundPortfolioLoco from "../pages/FundPortfolio/FundPortfolioLoco";
 import FundTradingLoco from "../pages/FundTrading/FundTradingLoco";
 import { FundTrading } from "../pages/FundTrading/FundTrading";
-import FundYield from "../pages/FundYield/FundYield";
+import { FundYield } from "../pages/FundYield/FundYield";
+import FundYieldLoco from "../pages/FundYield/FundYieldLoco";
 import { Exchange } from "../pages/Exchange/Exchange";
 import Actions from "../pages/Actions/Actions";
 import OrdersOverview from "../pages/OrdersOverview/OrdersOverview";
@@ -505,12 +507,16 @@ function FullApp() {
               <Route exact path="/create-fund">
                 <CreateFund />
               </Route>
-              <Route exact path="/fund/portfolio">
-                <FundPortfolio />
+              <Route exact path="/fund/portfolio/loco">
+                <FundPortfolioLoco />
               </Route>
-              <Route exact path="/fund/tradingLoco">
+              <Route exact path="/fund/trading/loco">
                 <FundTradingLoco />
               </Route>
+              <Route exact path="/fund/yield/loco">
+                <FundYieldLoco />
+              </Route>
+
               <Route exact path="/fund/trading">
                 <FundTrading
                   ref={exchangeRef}
@@ -526,8 +532,35 @@ function FullApp() {
                   savedShouldDisableOrderValidation={savedShouldDisableOrderValidation}
                 />
               </Route>
+              <Route exact path="/fund/portfolio">
+                <FundPortfolio
+                  ref={exchangeRef}
+                  savedShowPnlAfterFees={savedShowPnlAfterFees}
+                  savedIsPnlInLeverage={savedIsPnlInLeverage}
+                  setSavedIsPnlInLeverage={setSavedIsPnlInLeverage}
+                  savedSlippageAmount={savedSlippageAmount}
+                  setPendingTxns={setPendingTxns}
+                  pendingTxns={pendingTxns}
+                  savedShouldShowPositionLines={savedShouldShowPositionLines}
+                  setSavedShouldShowPositionLines={setSavedShouldShowPositionLines}
+                  connectWallet={connectWallet}
+                  savedShouldDisableOrderValidation={savedShouldDisableOrderValidation}
+                />
+              </Route>
               <Route exact path="/fund/yield">
-                <FundYield />
+                <FundYield
+                  ref={exchangeRef}
+                  savedShowPnlAfterFees={savedShowPnlAfterFees}
+                  savedIsPnlInLeverage={savedIsPnlInLeverage}
+                  setSavedIsPnlInLeverage={setSavedIsPnlInLeverage}
+                  savedSlippageAmount={savedSlippageAmount}
+                  setPendingTxns={setPendingTxns}
+                  pendingTxns={pendingTxns}
+                  savedShouldShowPositionLines={savedShouldShowPositionLines}
+                  setSavedShouldShowPositionLines={setSavedShouldShowPositionLines}
+                  connectWallet={connectWallet}
+                  savedShouldDisableOrderValidation={savedShouldDisableOrderValidation}
+                />
               </Route>
               <Route exact path="/buy_gmx">
                 <BuyGMX />

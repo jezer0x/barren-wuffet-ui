@@ -419,10 +419,6 @@ export default function ExchangeTVChart(props) {
     return null;
   }
 
-  const onSelectAction = (token) => {
-    setActionToPerform(token);
-  };
-
   const onSelectToken = (token) => {
     const tmp = getTokenInfo(infoTokens, token.address);
     setChartToken(tmp);
@@ -438,7 +434,7 @@ export default function ExchangeTVChart(props) {
               <ActionSelector
                 chainId={chainId}
                 selectedAction={actionToPerform}
-                onSelectAction={onSelectAction}
+                onSelectAction={setActionToPerform}
                 className="chart-action-selector"
               />
             </div>

@@ -20,6 +20,12 @@ const ACTIONS = {
       imageUrl: "https://assets.coingecko.com/coins/images/279/small/ethereum.png?1595348880",
     },
     {
+      name: "GMX LP",
+      address: getContract(421611, "GMX"),
+      actionType: ActionTypes.Yield,
+      imageUrl: "https://assets.coingecko.com/coins/images/279/small/ethereum.png?1595348880",
+    },
+    {
       name: "GMX Increase",
       address: getContract(421611, "GMX"),
       actionType: ActionTypes.Trading,

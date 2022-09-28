@@ -6,9 +6,9 @@ import "../Exchange/ChartTokenSelector.css";
 import { getWhitelistedActions, ActionTypes } from "../../config/Actions";
 
 export default function ActionSelector(props) {
-  const { chainId, selectedAction, onSelectAction } = props;
+  const { chainId, selectedAction, onSelectAction, actionType } = props;
 
-  const whitelistedActions = getWhitelistedActions(chainId, ActionTypes.Trading);
+  const whitelistedActions = getWhitelistedActions(chainId, actionType || ActionTypes.Trading);
 
   const onSelect = async (action) => {
     onSelectAction(action);
